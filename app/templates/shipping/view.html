@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}إذن {{ permit.number }} — منصتي{% endblock %}
+{% block content %}
+{% set dest_cur = permit.to_warehouse.branch.country.currency_code %}
+<div class="max-w-4xl mx-auto">
+  <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+    <div class="flex items-center gap-3">
+      <a href="{{ url_for('shipping.index') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+      <div><h1 class="text-2xl font-bold flex items-center gap-2">إذن تحويل <span class="latin-nums">{{ permit.number }}</span>
+        <span class="px-2 py-0.5 rounded-full text-xs {{ {'draft':'bg-amber-50 text-amber-700','sent':'bg-blue-50 text-brand-700','received':'bg-green-50 text-green-700','closed':'bg-slate-100 text-slate-600','cancelled':'bg-red-50 text-red-600'}.get(permit.status,'') }}">{{ permit.status_label }}</span></h1>
+        <p class="text-slate-500 text-sm">{{ permit.from_warehouse.name_ar }} ← {{ permit.to_warehouse.name_ar }} · توزيع {{ {'value':'بالقيمة','quantity':'بالكمية','weight':'بالوزن'}[permit.allocation_method] }}</p></div>
+    </div>
+  </div>
+
+  <!-- lifecycle actions -->
+  <div class="flex flex-wrap gap-2 mb-6">
+    {% macro pform(action, label, cls, confirm='') %}
+      <form method="post" action="{{ url_for('shipping.' ~ action, pid=permit.id) }}" {% if confirm %}onsubmit="return confirm('{{ confirm }}')"{% endif %}>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="px-4 py-2 rounded-xl text-sm font-medium {{ cls }}">{{ label }}</button>
+      </form>
+    {% endmacro %}
+    {% if permit.status == 'draft' %}
+      {{ pform('send', '🚚 إرسال الشحنة', 'bg-brand-600 hover:bg-brand-700 text-white') }}
+      {{ pform('cancel', 'إلغاء', 'border border-slate-300 text-slate-600', 'إلغاء الإذن؟') }}
+    {% elif permit.status == 'sent' %}
+      <a href="#receive" class="px-4 py-2 rounded-xl text-sm font-medium bg-green-600 hover:bg-green-700 text-white">📦 استلام الشحنة</a>
+    {% elif permit.status == 'received' %}
+      {{ pform('close', 'إغلاق الإذن', 'bg-slate-700 hover:bg-slate-800 text-white') }}
+    {% endif %}
+  </div>
+
+  <!-- cost breakdown report (§8.3) -->
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden mb-4" style="box-shadow:var(--sh)">
+    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold text-sm">تفصيل التكلفة (بعملة الدفاتر)</div>
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+        <tr><th class="text-start px-4 py-2">الصنف</th><th class="text-end px-4 py-2">مرسل</th>
+          <th class="text-end px-4 py-2">مستلم</th><th class="text-end px-4 py-2">تكلفة أصلية</th>
+          <th class="text-end px-4 py-2">نصيب الشحن</th><th class="text-end px-4 py-2">نصيب الجمارك</th>
+          <th class="text-end px-4 py-2">تكلفة نهائية/وحدة</th>
+          <th class="text-end px-4 py-2">أقل سعر بيع ({{ dest_cur }})</th></tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for l in permit.lines %}
+          <tr><td class="px-4 py-2">{{ l.product.name_ar }}</td>
+            <td class="px-4 py-2 text-end latin-nums">{{ l.qty_sent | money(0) }}</td>
+            <td class="px-4 py-2 text-end latin-nums">{{ l.qty_received | money(0) if (permit.status in ['received','closed'] or l.qty_received) else '—' }}</td>
+            <td class="px-4 py-2 text-end latin-nums">{{ l.unit_cost_book | money }}</td>
+            <td class="px-4 py-2 text-end latin-nums">{{ l.alloc_shipping_book | money }}</td>
+            <td class="px-4 py-2 text-end latin-nums">{{ l.alloc_customs_book | money }}</td>
+            <td class="px-4 py-2 text-end latin-nums font-semibold">{{ l.final_unit_cost_book | money }}</td>
+            <td class="px-4 py-2 text-end latin-nums text-brand-700 font-semibold">{{ l.final_unit_cost_native(permit.fx_rate) | money }}</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot class="bg-slate-50 dark:bg-slate-800/50 font-semibold text-xs">
+        <tr><td colspan="3" class="px-4 py-2">قيمة البضاعة: <span class="latin-nums">{{ permit.goods_book | money }}</span></td>
+          <td colspan="5" class="px-4 py-2 text-end">مصاريف (شحن+جمارك): <span class="latin-nums">{{ permit.expenses_book | money }}</span> · الإجمالي في الطريق: <span class="latin-nums">{{ (permit.goods_book + permit.expenses_book) | money }}</span></td></tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- add expense (after send) -->
+  {% if permit.status in ['sent', 'received'] %}
+  <div class="grid md:grid-cols-2 gap-4 mb-4">
+    <form method="post" action="{{ url_for('shipping.expense', pid=permit.id) }}" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-3" style="box-shadow:var(--sh)">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="font-semibold text-sm">تسجيل مصروف شحن / جمارك</div>
+      <div class="grid grid-cols-2 gap-2">
+        <select name="kind" class="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 text-sm outline-none">
+          <option value="shipping">شحن</option><option value="customs">جمارك</option></select>
+        <input name="amount" inputmode="decimal" placeholder="المبلغ (د.إ)" class="text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 latin-nums text-sm outline-none">
+      </div>
+      <select name="paid_from_account_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 text-sm outline-none">
+        {% for aid, lbl in sources %}<option value="{{ aid }}">{{ lbl }}</option>{% endfor %}</select>
+      <button class="w-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium py-2 rounded-lg">تسجيل وتوزيع</button>
+    </form>
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5" style="box-shadow:var(--sh)">
+      <div class="font-semibold text-sm mb-3">المصاريف المسجّلة</div>
+      {% for e in permit.expenses %}
+        <div class="flex items-center justify-between text-sm py-1"><span>{{ e.kind_label }}</span><span class="latin-nums">{{ e.amount_book | money }}</span></div>
+      {% else %}<div class="text-slate-400 text-sm">لا مصاريف بعد.</div>{% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- receive (full or partial) -->
+  {% if permit.status == 'sent' %}
+  <form id="receive" method="post" action="{{ url_for('shipping.receive', pid=permit.id) }}"
+        x-data="{partial:false}"
+        class="bg-white dark:bg-slate-900 rounded-2xl border border-green-200 dark:border-green-900 p-5" style="box-shadow:var(--sh)">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="font-semibold text-sm mb-1">📦 استلام الشحنة</div>
+    <p class="text-xs text-slate-500 mb-3">أدخل الكمية المستلمة فعليًا لكل صنف. الكمية الظاهرة هي المتبقي في الطريق.</p>
+    <table class="w-full text-sm mb-3">
+      <thead class="text-slate-400 text-xs"><tr><th class="text-start py-1">الصنف</th><th class="text-end py-1">المتبقي</th><th class="text-end py-1">المستلم الآن</th></tr></thead>
+      <tbody>
+        {% for l in permit.lines %}{% set outstanding = l.qty_sent - l.qty_received %}
+        <tr class="border-t border-slate-100 dark:border-slate-800">
+          <td class="py-2">{{ l.product.name_ar }}</td>
+          <td class="py-2 text-end latin-nums text-slate-500">{{ outstanding | money(0) }}</td>
+          <td class="py-2 text-end"><input name="recv_{{ l.id }}" value="{{ outstanding | money(0) }}" inputmode="decimal" class="w-24 text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-1.5 latin-nums outline-none"></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <label class="flex items-center gap-2 text-sm mb-3 cursor-pointer">
+      <input type="checkbox" x-model="partial" name="partial" value="1">
+      <span>استلام جزئي — الباقي ما زال في الطريق (لا يُحتسب عجزًا)</span>
+    </label>
+    <p class="text-xs mb-3" :class="partial ? 'text-blue-600' : 'text-amber-600'"
+       x-text="partial ? 'سيبقى الإذن في الطريق ويمكن استلام الباقي لاحقًا.' : 'أي كمية ناقصة ستُسجَّل كعجز/تالف في الطريق ويُغلق الاستلام.'"></p>
+    <button class="px-5 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold">تأكيد الاستلام</button>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

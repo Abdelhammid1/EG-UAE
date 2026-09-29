@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}التقفيل اليومي — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div><h1 class="text-2xl font-bold">التقفيل اليومي</h1>
+    <p class="text-slate-500 text-sm latin-nums">{{ d.day }}</p></div>
+  <form method="get" class="flex items-end gap-2">
+    <input type="date" name="day" value="{{ d.day }}" class="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-1.5 text-sm latin-nums outline-none">
+    <select name="branch_id" class="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-1.5 text-sm outline-none"><option value="">كل الفروع</option>{% for b in branches %}<option value="{{ b.id }}" {% if branch_id==b.id %}selected{% endif %}>{{ b.name_ar }}</option>{% endfor %}</select>
+    <button class="px-4 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">عرض</button>
+  </form>
+</div>
+<div class="grid sm:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5" style="box-shadow:var(--sh)"><div class="text-xs text-slate-400">عدد الفواتير</div><div class="text-2xl font-bold latin-nums">{{ d.count }}</div></div>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5" style="box-shadow:var(--sh)"><div class="text-xs text-slate-400">إجمالي المبيعات</div><div class="text-2xl font-bold latin-nums text-green-700">{{ d.total | money }}</div></div>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5" style="box-shadow:var(--sh)"><div class="text-xs text-slate-400">المرتجعات</div><div class="text-2xl font-bold latin-nums text-red-600">{{ d.returns_total | money }}</div></div>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5" style="box-shadow:var(--sh)"><div class="text-xs text-slate-400">صافي</div><div class="text-2xl font-bold latin-nums">{{ (d.total - d.returns_total) | money }}</div></div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-w-md" style="box-shadow:var(--sh)">
+  <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold text-sm">حسب طريقة الدفع</div>
+  <table class="w-full text-sm"><tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+    {% for m, amt in d.by_method.items() %}<tr><td class="px-4 py-2.5">{{ {'cash':'نقدي','card':'بطاقة','credit':'آجل','funder':'تمويل','installment':'تقسيط','split':'مقسّم'}.get(m, m) }}</td><td class="px-4 py-2.5 text-end latin-nums">{{ amt | money }}</td></tr>
+    {% else %}<tr><td colspan="2" class="px-4 py-8 text-center text-slate-400">لا مبيعات في هذا اليوم.</td></tr>{% endfor %}
+  </tbody></table>
+</div>
+{% endblock %}

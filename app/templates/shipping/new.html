@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}إذن تحويل جديد — منصتي{% endblock %}
+{% block content %}
+<div x-data="trf()" class="max-w-3xl mx-auto">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('shipping.index') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <h1 class="text-2xl font-bold">إذن تحويل جديد</h1>
+  </div>
+  <form method="post" class="space-y-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 grid sm:grid-cols-3 gap-4" style="box-shadow:var(--sh)">
+      <div><label class="block text-sm font-medium mb-1.5">من مخزن</label>
+        <select name="from_warehouse_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+          {% for w in warehouses %}<option value="{{ w.id }}">{{ w.name_ar }}</option>{% endfor %}</select></div>
+      <div><label class="block text-sm font-medium mb-1.5">إلى مخزن</label>
+        <select name="to_warehouse_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+          {% for w in warehouses %}<option value="{{ w.id }}">{{ w.name_ar }}</option>{% endfor %}</select></div>
+      <div><label class="block text-sm font-medium mb-1.5">توزيع المصاريف</label>
+        <select name="allocation_method" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="value">بالقيمة</option><option value="quantity">بالكمية</option><option value="weight">بالوزن</option></select></div>
+    </div>
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+          <tr><th class="text-start px-3 py-3">الصنف</th><th class="text-end px-3 py-3 w-32">الكمية</th><th class="w-10"></th></tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          <template x-for="(ln,i) in lines" :key="i">
+            <tr><td class="px-3 py-2">
+              <select name="product_id" x-model="ln.pid" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                <option value="">— اختر —</option>
+                {% for p in products %}<option value="{{ p.id }}">{{ p.name_ar }}</option>{% endfor %}</select></td>
+              <td class="px-3 py-2"><input name="qty" x-model="ln.qty" inputmode="decimal" class="w-full text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 latin-nums outline-none focus:ring-2 focus:ring-brand-500"></td>
+              <td class="px-2 py-2 text-center"><button type="button" @click="lines.splice(i,1)" class="text-slate-400 hover:text-red-600">✕</button></td></tr>
+          </template>
+        </tbody>
+        <tfoot class="bg-slate-50 dark:bg-slate-800/50"><tr><td colspan="3" class="px-3 py-3"><button type="button" @click="lines.push({pid:'',qty:1})" class="text-brand-600 hover:text-brand-700">+ إضافة صنف</button></td></tr></tfoot>
+      </table>
+    </div>
+    <div class="flex justify-end"><button class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold">إنشاء المسودة</button></div>
+  </form>
+</div>
+<script>function trf(){ return { lines:[{pid:'',qty:1}] }; }</script>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}الفروع — منصتي{% endblock %}
+{% block content %}
+<div class="mb-6"><h1 class="text-2xl font-bold">الفروع</h1><p class="text-slate-500 text-sm">أضف فرعًا جديدًا، ويظهر فورًا في كل القوائم والتقارير.</p></div>
+<div class="grid lg:grid-cols-2 gap-6">
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <table class="w-full text-sm"><thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs"><tr><th class="text-start px-4 py-3">الفرع</th><th class="text-start px-4 py-3">الدولة</th></tr></thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for b in items %}<tr><td class="px-4 py-2.5 font-medium">{{ b.name_ar }}</td><td class="px-4 py-2.5">{{ b.country.name_ar }}</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+  <form method="post" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-3 h-fit" style="box-shadow:var(--sh)">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="font-semibold">إضافة فرع</div>
+    <input name="name_ar" placeholder="اسم الفرع" required class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 outline-none">
+    <input name="name_en" placeholder="Name (EN)" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none">
+    <select name="country_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none">{% for c in countries %}<option value="{{ c.id }}">{{ c.name_ar }}</option>{% endfor %}</select>
+    <button class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">إضافة</button>
+  </form>
+</div>
+{% endblock %}

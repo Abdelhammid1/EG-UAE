@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}صندوق الاعتمادات — منصتي{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold flex items-center gap-2">صندوق الاعتمادات
+    {% if s.count %}<span class="text-sm px-2 py-0.5 rounded-full bg-red-100 text-red-700 latin-nums">{{ s.count }}</span>{% endif %}
+  </h1>
+  <p class="text-slate-500 text-sm">كل العمليات التي تنتظر موافقتك في مكان واحد — لا شيء ينتظر دون أن تراه.</p>
+</div>
+
+{% if s.count == 0 %}
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-10 text-center" style="box-shadow:var(--sh)">
+  <div class="text-4xl mb-2">✅</div>
+  <div class="font-semibold">لا توجد اعتمادات معلّقة</div>
+  <div class="text-slate-400 text-sm mt-1">كل شيء تحت السيطرة.</div>
+</div>
+{% endif %}
+
+<!-- treasury transfers -->
+{% if s.transfers %}
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden mb-4" style="box-shadow:var(--sh)">
+  <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold text-sm">تحويلات الخزينة فوق حد الاعتماد</div>
+  <table class="w-full text-sm"><tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+    {% for t in s.transfers %}
+    <tr>
+      <td class="px-4 py-3"><div class="font-medium">{{ t.kind_label }}</div><div class="text-xs text-slate-400 latin-nums">{{ t.number }} · {{ t.memo or '' }}</div></td>
+      <td class="px-4 py-3 text-end latin-nums font-semibold">{{ t.amount_original | money }} {{ t.currency_code }}</td>
+      <td class="px-4 py-3 text-end">
+        <form method="post" action="{{ url_for('treasury.approve', txn_id=t.id) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium">اعتماد وترحيل</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody></table>
+</div>
+{% endif %}
+
+<!-- custody expenses -->
+{% if s.custody %}
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden mb-4" style="box-shadow:var(--sh)">
+  <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold text-sm">مصروفات العهدة بانتظار الاعتماد</div>
+  <table class="w-full text-sm"><tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+    {% for row in s.custody %}{% set t = row.txn %}
+    <tr>
+      <td class="px-4 py-3"><div class="font-medium">{{ row.custody.name_ar }}</div><div class="text-xs text-slate-400">{{ t.memo or 'مصروف' }} · {{ t.date }}</div></td>
+      <td class="px-4 py-3 text-end latin-nums font-semibold">{{ t.amount | money }} {{ row.custody.currency_code }}</td>
+      <td class="px-4 py-3 text-end whitespace-nowrap">
+        <form method="post" action="{{ url_for('custody.expense_approve', txn_id=t.id) }}" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="next" value="{{ url_for('approvals.index') }}">
+          <button class="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium">اعتماد</button>
+        </form>
+        <form method="post" action="{{ url_for('custody.expense_reject', txn_id=t.id) }}" class="inline ms-1" onsubmit="return confirm('رفض هذا المصروف؟')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="next" value="{{ url_for('approvals.index') }}">
+          <button class="px-3 py-1.5 rounded-lg border border-red-300 text-red-600 text-xs font-medium">رفض</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody></table>
+</div>
+{% endif %}
+
+<!-- draft manual entries -->
+{% if s.entries %}
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden mb-4" style="box-shadow:var(--sh)">
+  <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold text-sm">قيود يدوية بانتظار الترحيل (فصل المهام)</div>
+  <table class="w-full text-sm"><tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+    {% for e in s.entries %}
+    <tr>
+      <td class="px-4 py-3"><div class="font-medium latin-nums">{{ e.number or 'مسودة' }}</div><div class="text-xs text-slate-400">{{ e.memo or '' }} · {{ e.date }}</div></td>
+      <td class="px-4 py-3 text-end latin-nums">{{ e.total_debit_book | money }}</td>
+      <td class="px-4 py-3 text-end">
+        <a href="{{ url_for('accounting.journal_view', entry_id=e.id) }}" class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-medium">مراجعة وترحيل</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody></table>
+</div>
+{% endif %}
+{% endblock %}

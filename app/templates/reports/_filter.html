@@ -1,0 +1,16 @@
+{% macro daterange(start, end, branch_id, branches, show_branch=true) %}
+<form method="get" class="flex items-end gap-2 flex-wrap">
+  <div><label class="block text-xs text-slate-400 mb-1">من</label>
+    <input type="date" name="start" value="{{ start }}" class="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-1.5 text-sm latin-nums outline-none"></div>
+  <div><label class="block text-xs text-slate-400 mb-1">إلى</label>
+    <input type="date" name="end" value="{{ end }}" class="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-1.5 text-sm latin-nums outline-none"></div>
+  {% if show_branch %}
+  <div><label class="block text-xs text-slate-400 mb-1">الفرع</label>
+    <select name="branch_id" class="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-1.5 text-sm outline-none">
+      <option value="">كل الفروع</option>
+      {% for b in branches %}<option value="{{ b.id }}" {% if branch_id==b.id %}selected{% endif %}>{{ b.name_ar }}</option>{% endfor %}
+    </select></div>
+  {% endif %}
+  <button class="px-4 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">عرض</button>
+</form>
+{% endmacro %}

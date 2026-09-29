@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "reports/_filter.html" import daterange %}
+{% block title %}المبيعات والربحية — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div><h1 class="text-2xl font-bold">المبيعات والربحية حسب المنتج</h1>
+    <p class="text-slate-500 text-sm latin-nums">{{ start }} — {{ end }} · هامش الربح بعد التكلفة النهائية</p></div>
+  {{ daterange(start, end, branch_id, branches) }}
+  <a href="{{ url_for('exports.sales', start=start, end=end, branch_id=branch_id) }}" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm">تصدير Excel</a>
+  <a href="{{ url_for('exports.sales', start=start, end=end, branch_id=branch_id, format='pdf') }}" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm">PDF</a>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+      <tr><th class="text-start px-4 py-3">المنتج</th><th class="text-end px-4 py-3">الكمية</th>
+        <th class="text-end px-4 py-3">الإيراد</th><th class="text-end px-4 py-3">التكلفة</th>
+        <th class="text-end px-4 py-3">هامش الربح</th><th class="text-end px-4 py-3">النسبة</th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for r in rows %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+          <td class="px-4 py-2.5 font-medium">{{ r.product.name_ar }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums">{{ r.qty | money(0) }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums">{{ r.revenue | money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums text-slate-500">{{ r.cogs | money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums font-semibold text-green-700">{{ r.margin | money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums text-xs text-slate-400">{{ ((r.margin / r.revenue * 100) if r.revenue else 0) | money(1) }}%</td>
+        </tr>
+      {% else %}<tr><td colspan="6" class="px-4 py-10 text-center text-slate-400">لا مبيعات في الفترة.</td></tr>{% endfor %}
+    </tbody>
+    <tfoot class="bg-slate-50 dark:bg-slate-800/50 font-bold"><tr>
+      <td class="px-4 py-3">الإجمالي</td><td></td>
+      <td class="px-4 py-3 text-end latin-nums">{{ totals.revenue | money }}</td>
+      <td class="px-4 py-3 text-end latin-nums">{{ totals.cogs | money }}</td>
+      <td class="px-4 py-3 text-end latin-nums text-green-700">{{ totals.margin | money }}</td><td></td></tr></tfoot>
+  </table>
+</div>
+{% endblock %}

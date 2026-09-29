@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}عهدة {{ custody.name_ar }} — منصتي{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+    <div class="flex items-center gap-3">
+      <a href="{{ url_for('custody.index') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+      <div><h1 class="text-2xl font-bold flex items-center gap-2">{{ custody.name_ar }}
+        {% if custody.status=='closed' %}<span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600">مغلقة</span>{% endif %}</h1>
+        <p class="text-slate-500 text-sm">{{ custody.currency_code }}</p></div>
+    </div>
+    <div class="text-end"><div class="text-xs text-slate-400">الرصيد المتاح</div>
+      <div class="text-2xl font-bold latin-nums">{{ available|money }} {{ custody.currency_code }}</div></div>
+  </div>
+
+  {% if custody.status=='open' %}
+  <div class="grid sm:grid-cols-3 gap-3 mb-6">
+    <!-- issue -->
+    <form method="post" action="{{ url_for('custody.issue', cid=custody.id) }}" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-2" style="box-shadow:var(--sh)">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="font-semibold text-sm">صرف عهدة</div>
+      <select name="treasury_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 text-sm outline-none">
+        {% for t in treasuries %}<option value="{{ t.id }}">{{ t.name_ar }}</option>{% endfor %}</select>
+      <input name="amount" inputmode="decimal" placeholder="المبلغ" class="w-full text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 latin-nums text-sm outline-none">
+      <button class="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-2 rounded-lg">صرف</button>
+    </form>
+    <!-- expense -->
+    <form method="post" action="{{ url_for('custody.expense', cid=custody.id) }}" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-2" style="box-shadow:var(--sh)">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="font-semibold text-sm">مصروف من العهدة</div>
+      <select name="expense_account_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 text-sm outline-none">
+        {% for a in expense_accounts %}<option value="{{ a.id }}">{{ a.name_ar }}</option>{% endfor %}</select>
+      <input name="amount" inputmode="decimal" placeholder="المبلغ" class="w-full text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 latin-nums text-sm outline-none">
+      <button class="w-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium py-2 rounded-lg">تسجيل</button>
+    </form>
+    <!-- close -->
+    <form method="post" action="{{ url_for('custody.close', cid=custody.id) }}" onsubmit="return confirm('إغلاق العهدة وإرجاع الرصيد للخزينة؟')" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-2" style="box-shadow:var(--sh)">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="font-semibold text-sm">إغلاق وتسوية</div>
+      <select name="treasury_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 text-sm outline-none">
+        {% for t in treasuries %}<option value="{{ t.id }}">إرجاع إلى: {{ t.name_ar }}</option>{% endfor %}</select>
+      <button class="w-full border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium py-2 rounded-lg">إغلاق العهدة</button>
+    </form>
+  </div>
+  {% endif %}
+
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold text-sm">حركات العهدة</div>
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+        <tr><th class="text-start px-4 py-2">التاريخ</th><th class="text-start px-4 py-2">النوع</th>
+          <th class="text-start px-4 py-2">البيان</th><th class="text-end px-4 py-2">المبلغ</th></tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for t in txns %}
+          <tr><td class="px-4 py-2 latin-nums text-slate-500">{{ t.date }}</td>
+            <td class="px-4 py-2"><span class="px-2 py-0.5 rounded text-xs {{ 'bg-green-50 text-green-700' if t.kind=='issue' else 'bg-slate-100 text-slate-600' }}">{{ t.kind_label }}</span></td>
+            <td class="px-4 py-2 text-slate-500">{{ t.memo or t.ref_doc or '—' }}</td>
+            <td class="px-4 py-2 text-end latin-nums {{ 'text-green-700' if t.kind in ['issue'] else 'text-red-600' }}">{{ t.amount|money }}</td></tr>
+        {% else %}<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">لا حركات.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

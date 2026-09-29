@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "reports/_filter.html" import daterange %}
+{% block title %}الميزانية العمومية — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div><h1 class="text-2xl font-bold">الميزانية العمومية</h1>
+    <p class="text-slate-500 text-sm latin-nums">كما في {{ as_of }} · بالدرهم
+      {% if r.balanced %}<span class="text-green-600">· ✓ متزنة</span>{% else %}<span class="text-red-600">· غير متزنة</span>{% endif %}</p></div>
+  <div class="flex items-center gap-2 flex-wrap">
+    {{ daterange(as_of, as_of, branch_id, branches) }}
+    <a href="{{ url_for('exports.balance_sheet', end=as_of, branch_id=branch_id) }}" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm">تصدير Excel</a>
+    <a href="{{ url_for('exports.balance_sheet', end=as_of, branch_id=branch_id, format='pdf') }}" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm">PDF</a>
+  </div>
+</div>
+<div class="grid md:grid-cols-2 gap-6 max-w-4xl">
+  <!-- assets -->
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold">الأصول</div>
+    <table class="w-full text-sm"><tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for a in r.assets %}<tr><td class="px-4 py-2">{{ a.account.name_ar }}</td><td class="px-4 py-2 text-end latin-nums">{{ a.amount | money }}</td></tr>
+      {% else %}<tr><td class="px-4 py-6 text-center text-slate-400">—</td></tr>{% endfor %}
+    </tbody><tfoot class="bg-slate-50 dark:bg-slate-800/50 font-bold"><tr><td class="px-4 py-3">إجمالي الأصول</td><td class="px-4 py-3 text-end latin-nums">{{ r.assets_total | money }}</td></tr></tfoot></table>
+  </div>
+  <!-- liabilities + equity -->
+  <div class="space-y-6">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+      <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold">الخصوم</div>
+      <table class="w-full text-sm"><tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for l in r.liabilities %}<tr><td class="px-4 py-2">{{ l.account.name_ar }}</td><td class="px-4 py-2 text-end latin-nums">{{ l.amount | money }}</td></tr>
+        {% else %}<tr><td class="px-4 py-6 text-center text-slate-400">—</td></tr>{% endfor %}
+      </tbody><tfoot class="bg-slate-50 dark:bg-slate-800/50 font-bold"><tr><td class="px-4 py-3">إجمالي الخصوم</td><td class="px-4 py-3 text-end latin-nums">{{ r.liabilities_total | money }}</td></tr></tfoot></table>
+    </div>
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+      <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold">حقوق الملكية</div>
+      <table class="w-full text-sm"><tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for eq in r.equity %}<tr><td class="px-4 py-2">{{ eq.account.name_ar }}</td><td class="px-4 py-2 text-end latin-nums">{{ eq.amount | money }}</td></tr>{% endfor %}
+        <tr><td class="px-4 py-2 text-slate-500">صافي ربح الفترة</td><td class="px-4 py-2 text-end latin-nums">{{ r.net_income | money }}</td></tr>
+      </tbody><tfoot class="bg-slate-50 dark:bg-slate-800/50 font-bold"><tr><td class="px-4 py-3">إجمالي حقوق الملكية</td><td class="px-4 py-3 text-end latin-nums">{{ r.equity_total | money }}</td></tr></tfoot></table>
+    </div>
+  </div>
+</div>
+{% endblock %}

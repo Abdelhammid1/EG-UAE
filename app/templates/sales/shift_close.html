@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}إقفال الوردية — منصتي{% endblock %}
+{% block content %}
+<div class="max-w-lg mx-auto">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('inventory.pos') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <h1 class="text-2xl font-bold">إقفال الوردية <span class="latin-nums">{{ shift.number }}</span></h1>
+  </div>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4" style="box-shadow:var(--sh)"
+       x-data="{ counted: 0, expected: {{ expected | float }} }">
+    <div class="grid grid-cols-2 gap-3 text-sm">
+      <div class="rounded-lg bg-slate-50 dark:bg-slate-800 p-3"><div class="text-slate-400 text-xs">رصيد افتتاحي</div><div class="text-lg font-bold latin-nums">{{ shift.opening_cash | money }}</div></div>
+      <div class="rounded-lg bg-slate-50 dark:bg-slate-800 p-3"><div class="text-slate-400 text-xs">مبيعات نقدية</div><div class="text-lg font-bold latin-nums">{{ cash_sales | money }}</div></div>
+    </div>
+    <div class="rounded-lg bg-brand-50 dark:bg-brand-950 p-3"><div class="text-brand-600 text-xs">النقدية المتوقعة</div><div class="text-2xl font-bold latin-nums text-brand-700">{{ expected | money }} د.إ</div></div>
+    <form method="post" class="space-y-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div><label class="block text-sm font-medium mb-1.5">النقدية الفعلية في الدرج</label>
+        <input name="counted_cash" x-model.number="counted" inputmode="decimal" class="w-full text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums text-lg outline-none focus:ring-2 focus:ring-brand-500"></div>
+      <div class="text-center py-2 rounded-lg" :class="(counted-expected)===0 ? 'bg-green-50 text-green-700' : ((counted-expected)>0 ? 'bg-blue-50 text-brand-700' : 'bg-red-50 text-red-600')">
+        <span x-show="(counted-expected)===0">✓ مطابق</span>
+        <span x-show="(counted-expected)>0" class="latin-nums" x-text="'زيادة: ' + (counted-expected).toFixed(2)"></span>
+        <span x-show="(counted-expected)<0" class="latin-nums" x-text="'عجز: ' + (counted-expected).toFixed(2)"></span>
+      </div>
+      <button class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">إقفال الوردية</button>
+      <p class="text-xs text-slate-400">يُسجَّل العجز أو الزيادة بقيد مستقل تلقائيًا (المادة 11).</p>
+    </form>
+  </div>
+</div>
+{% endblock %}

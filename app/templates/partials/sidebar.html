@@ -1,0 +1,129 @@
+<aside x-show="sidebar" x-cloak
+       class="w-64 shrink-0 bg-white dark:bg-slate-900 border-e border-slate-200 dark:border-slate-800 flex flex-col">
+  <div class="h-16 flex items-center gap-2.5 px-5 border-b border-slate-200 dark:border-slate-800">
+    <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="منصتي" class="w-9 h-9">
+    <span class="font-display font-extrabold text-xl text-brand-900 dark:text-brand-200">منصتي</span>
+  </div>
+
+  <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-1 text-sm">
+    {% macro navlink(endpoint, label, icon) %}
+      <a href="{{ url_for(endpoint) }}"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition
+                {% if request.endpoint == endpoint %}bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-semibold{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800{% endif %}">
+        <span class="text-lg">{{ icon }}</span><span>{{ label }}</span>
+      </a>
+    {% endmacro %}
+
+    {{ navlink('main.home', 'الرئيسية', '🏠') }}
+
+    {% if can('accounting.journal.post') %}
+      {% set pending_n = pending_approvals() %}
+      <a href="{{ url_for('approvals.index') }}"
+         class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition
+                {% if request.endpoint == 'approvals.index' %}bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-semibold{% else %}text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800{% endif %}">
+        <span class="text-lg">✅</span><span class="flex-1">الاعتمادات</span>
+        {% if pending_n %}<span class="text-[11px] px-2 py-0.5 rounded-full bg-red-100 text-red-700 latin-nums">{{ pending_n }}</span>{% endif %}
+      </a>
+    {% endif %}
+
+    {% if can('pos.sell') %}
+      <div class="px-3 pt-4 pb-1 text-xs font-semibold text-slate-400 uppercase">المبيعات</div>
+      {{ navlink('inventory.pos', 'نقطة البيع', '🛒') }}
+      {{ navlink('sales.quotes', 'عروض الأسعار', '🏷️') }}
+      {{ navlink('sales.customers', 'العملاء', '👤') }}
+      {{ navlink('sales.installments_overdue', 'الأقساط المتأخرة', '📅') }}
+    {% endif %}
+    {% if can('accounting.journal.create') %}
+      {{ navlink('sales.funders', 'جهات التمويل', '🏦') }}
+    {% endif %}
+
+    {% if can('accounting.journal.create') %}
+      <div class="px-3 pt-4 pb-1 text-xs font-semibold text-slate-400 uppercase">المخزون</div>
+      {{ navlink('inventory.products', 'المنتجات', '📦') }}
+      {{ navlink('inventory.warehouses', 'المخازن', '🏬') }}
+      {{ navlink('inventory.receive', 'استلام مخزون', '📥') }}
+      {{ navlink('inventory.damage', 'تالف / فقد', '🗑️') }}
+      {{ navlink('inventory.stocktakes', 'الجرد', '🔢') }}
+      {{ navlink('inventory.reorder', 'تنبيهات إعادة الطلب', '🔔') }}
+    {% endif %}
+
+    {% if can('warehouse.transfer') %}
+      {{ navlink('shipping.index', 'التحويل بين المخازن', '🚚') }}
+    {% endif %}
+
+    {% if can('purchase.invoice.create') %}
+      <div class="px-3 pt-4 pb-1 text-xs font-semibold text-slate-400 uppercase">المشتريات</div>
+      {{ navlink('purchasing.suppliers', 'الموردون', '🏭') }}
+      {{ navlink('purchasing.orders', 'أوامر الشراء', '📝') }}
+      {{ navlink('purchasing.invoice_new', 'فاتورة شراء', '🧾') }}
+      {{ navlink('purchasing.invoices', 'فواتير الشراء', '📄') }}
+      {{ navlink('purchasing.aging', 'أعمار الديون', '📆') }}
+    {% endif %}
+
+    {% if can('custody.settle') %}
+      <div class="px-3 pt-4 pb-1 text-xs font-semibold text-slate-400 uppercase">العهد</div>
+      {{ navlink('custody.index', 'العهد', '💼') }}
+    {% endif %}
+
+    {% if can('treasury.transfer') %}
+      <div class="px-3 pt-4 pb-1 text-xs font-semibold text-slate-400 uppercase">الخزائن والبنوك</div>
+      {{ navlink('treasury.index', 'الخزائن والحسابات', '🏦') }}
+      {{ navlink('treasury.transfer', 'تحويل', '🔁') }}
+      {{ navlink('parties.index', 'الأطراف والأشخاص', '🧑‍🤝‍🧑') }}
+      {{ navlink('parties.summary', 'ملخص الأطراف', '🧮') }}
+      {% if can('reports.financial') %}{{ navlink('parties.where_is_money', 'أين المال؟', '🔎') }}{% endif %}
+    {% endif %}
+
+    {% if can('accounting.journal.create') %}
+      <div class="px-3 pt-4 pb-1 text-xs font-semibold text-slate-400 uppercase">المحاسبة</div>
+      {{ navlink('accounting.accounts', 'دليل الحسابات', '📚') }}
+      {{ navlink('accounting.journal', 'القيود اليومية', '📒') }}
+      {{ navlink('accounting.periods', 'الفترات المحاسبية', '📅') }}
+      {{ navlink('accounting.fx_rates', 'أسعار الصرف', '💱') }}
+    {% endif %}
+
+    {% if can('reports.financial') %}
+      <div class="px-3 pt-4 pb-1 text-xs font-semibold text-slate-400 uppercase">التقارير</div>
+      {{ navlink('reports.dashboard', 'لوحة المالك', '📊') }}
+      {{ navlink('reports.income_statement', 'قائمة الدخل', '📈') }}
+      {{ navlink('reports.balance_sheet', 'الميزانية العمومية', '📋') }}
+      {{ navlink('accounting.trial_balance', 'ميزان المراجعة', '⚖️') }}
+      {{ navlink('reports.general_ledger', 'كشف حساب عام', '📒') }}
+      {{ navlink('reports.sales', 'المبيعات والربحية', '💹') }}
+      {{ navlink('reports.daily_close', 'التقفيل اليومي', '🧾') }}
+      {{ navlink('reports.tax', 'الضرائب', '🧾') }}
+      {{ navlink('reports.fx', 'فروق العملة', '💱') }}
+      {{ navlink('reports.exceptions', 'الاستثناءات والمخالفات', '⚠️') }}
+      {{ navlink('reports.async_index', 'تقارير كبيرة (خلفية)', '🗂️') }}
+    {% endif %}
+
+    {% if can('audit.view') %}
+      <div class="px-3 pt-4 pb-1 text-xs font-semibold text-slate-400 uppercase">التدقيق</div>
+      {{ navlink('main.audit_log', 'سجل التدقيق', '📝') }}
+    {% endif %}
+
+    {% if can('accounting.journal.create') %}
+      <div class="px-3 pt-4 pb-1 text-xs font-semibold text-slate-400 uppercase">نقل البيانات</div>
+      {{ navlink('migration.index', 'الأرصدة الافتتاحية', '📤') }}
+    {% endif %}
+
+    {% if can('users.manage') %}
+      <div class="px-3 pt-4 pb-1 text-xs font-semibold text-slate-400 uppercase">الإدارة</div>
+      {{ navlink('manage.users', 'المستخدمون', '👥') }}
+      {{ navlink('manage.roles', 'الصلاحيات', '🔑') }}
+    {% endif %}
+    {% if can('settings.manage') %}
+      {{ navlink('manage.branches', 'الفروع', '🏢') }}
+      {{ navlink('manage.warehouses', 'المخازن', '🏬') }}
+      {{ navlink('manage.currencies', 'العملات', '🪙') }}
+      {{ navlink('manage.countries', 'الدول', '🌍') }}
+      {{ navlink('manage.mappings', 'ربط الحسابات', '🔗') }}
+      <div class="px-3 pt-4 pb-1 text-xs font-semibold text-slate-400 uppercase">النظام</div>
+      {{ navlink('admin.index', 'إعدادات الشركة', '⚙️') }}
+    {% endif %}
+  </nav>
+
+  <div class="p-3 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-400">
+    الإصدار 0.1 — المرحلة 0
+  </div>
+</aside>

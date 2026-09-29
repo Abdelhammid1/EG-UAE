@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}فواتير الشراء — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div><h1 class="text-2xl font-bold">فواتير الشراء</h1></div>
+  <a href="{{ url_for('purchasing.invoice_new') }}" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">+ فاتورة</a>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+      <tr><th class="text-start px-4 py-3">الرقم</th><th class="text-start px-4 py-3">التاريخ</th>
+        <th class="text-start px-4 py-3">المورد</th><th class="text-center px-4 py-3">النوع</th>
+        <th class="text-end px-4 py-3">الإجمالي</th><th class="text-end px-4 py-3">المتبقي</th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for i in invoices %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer" onclick="window.location='{{ url_for('purchasing.invoice_view', inv_id=i.id) }}'">
+          <td class="px-4 py-2.5 latin-nums font-medium">{{ i.number }}</td>
+          <td class="px-4 py-2.5 latin-nums text-slate-500">{{ i.date }}</td>
+          <td class="px-4 py-2.5">{{ i.supplier.name_ar if i.supplier else '—' }}</td>
+          <td class="px-4 py-2.5 text-center text-xs">{{ {'cash':'نقدي','credit':'آجل','custody':'عهدة'}[i.payment_type] }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums">{{ i.total|money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums {{ 'text-red-600' if outstanding(i)>0 else 'text-slate-400' }}">{{ outstanding(i)|money }}</td>
+        </tr>
+      {% else %}<tr><td colspan="6" class="px-4 py-10 text-center text-slate-400">لا فواتير.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

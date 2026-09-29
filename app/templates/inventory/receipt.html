@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>إيصال {{ sale.number }}</title>
+<style>
+  body{font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;margin:0;padding:12px;color:#111}
+  .r{max-width:300px;margin:0 auto}
+  h2{text-align:center;margin:4px 0}
+  .muted{color:#555;font-size:12px;text-align:center}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+  th,td{padding:3px 0;text-align:start}
+  .num{text-align:end;font-variant-numeric:tabular-nums}
+  .line{border-top:1px dashed #999;margin:8px 0}
+  .tot{display:flex;justify-content:space-between;font-weight:bold}
+  .copy{position:fixed;top:8px;left:8px;border:1px solid #999;padding:2px 8px;font-size:11px;color:#999}
+  @media print{.noprint{display:none}}
+</style>
+</head>
+<body onload="window.print && setTimeout(()=>window.print(),200)">
+  {% if reprint %}<div class="copy">نسخة</div>{% endif %}
+  <div class="r">
+    <h2>منصتي</h2>
+    <div class="muted">{{ sale.warehouse.branch.name_ar }}</div>
+    <div class="line"></div>
+    <div class="muted">إيصال بيع: {{ sale.number }}</div>
+    <div class="muted latin">{{ sale.date }} · {{ {'cash':'نقدي','card':'بطاقة','credit':'آجل','funder':'تمويل','installment':'تقسيط','split':'مقسّم'}.get(sale.payment_type, sale.payment_type) }}</div>
+    {% if sale.customer %}<div class="muted">العميل: {{ sale.customer.name_ar }}</div>{% endif %}
+    <table>
+      <thead><tr><th>الصنف</th><th class="num">كمية</th><th class="num">سعر</th><th class="num">إجمالي</th></tr></thead>
+      <tbody>
+        {% for l in sale.lines %}<tr><td>{{ l.product.name_ar }}</td><td class="num">{{ l.qty|money(0) }}</td><td class="num">{{ l.unit_price|money }}</td><td class="num">{{ l.line_total|money }}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    <div class="line"></div>
+    {% if sale.tax_amount and sale.tax_amount|float>0 %}
+      <div class="tot" style="font-weight:normal"><span>المجموع الفرعي</span><span class="num">{{ sale.subtotal|money }}</span></div>
+      <div class="tot" style="font-weight:normal"><span>الضريبة</span><span class="num">{{ sale.tax_amount|money }}</span></div>
+    {% endif %}
+    <div class="tot"><span>الإجمالي</span><span class="num">{{ sale.total|money }} {{ sale.currency_code }}</span></div>
+    <div class="line"></div>
+    <div class="muted">شكرًا لتعاملكم معنا</div>
+    <div class="noprint" style="text-align:center;margin-top:16px">
+      <button onclick="window.print()" style="padding:8px 20px;border:0;background:#1849A9;color:#fff;border-radius:8px">طباعة</button>
+      <a href="{{ url_for('inventory.sale_receipt_pdf', sale_id=sale.id) }}" style="margin-inline-start:8px;padding:8px 20px;border:1px solid #1849A9;color:#1849A9;border-radius:8px;text-decoration:none">حفظ PDF</a>
+      <a href="{{ url_for('inventory.sale_view', sale_id=sale.id) }}" style="margin-inline-start:8px">رجوع</a>
+    </div>
+  </div>
+</body>
+</html>

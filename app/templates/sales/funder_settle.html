@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}تسوية {{ funder.name_ar }} — منصتي{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto" x-data="{ received: 0, total: {{ total | float }} }">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('sales.funders') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <div><h1 class="text-2xl font-bold">تسوية — {{ funder.name_ar }}</h1>
+      <p class="text-slate-500 text-sm">الفرق بين قيمة الفواتير والمبلغ المستلم يُسجَّل عمولة تمويل.</p></div>
+  </div>
+  <form method="post" class="space-y-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+      <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold text-sm">فواتير بانتظار التسوية</div>
+      <table class="w-full text-sm">
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          {% for s in pending %}
+            <tr><td class="px-4 py-2.5"><label class="flex items-center gap-2"><input type="checkbox" name="sale_id" value="{{ s.id }}" checked> <span class="latin-nums">{{ s.number }}</span> · {{ s.date }}</label></td>
+              <td class="px-4 py-2.5 text-end latin-nums">{{ s.total | money }}</td></tr>
+          {% else %}<tr><td class="px-4 py-8 text-center text-slate-400">لا فواتير معلقة.</td></tr>{% endfor %}
+        </tbody>
+        <tfoot class="bg-slate-50 dark:bg-slate-800/50 font-bold"><tr><td class="px-4 py-3">إجمالي الفواتير</td><td class="px-4 py-3 text-end latin-nums">{{ total | money }} {{ funder.currency_code }}</td></tr></tfoot>
+      </table>
+    </div>
+    {% if pending %}
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-3" style="box-shadow:var(--sh)">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-sm font-medium mb-1.5">المبلغ المستلم فعليًا</label>
+          <input name="received_amount" x-model.number="received" inputmode="decimal" class="w-full text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none focus:ring-2 focus:ring-brand-500"></div>
+        <div><label class="block text-sm font-medium mb-1.5">الحساب البنكي المستلم</label>
+          <select name="bank_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none">
+            {% for b in banks %}<option value="{{ b.id }}">{{ b.name_ar }}</option>{% endfor %}</select></div>
+      </div>
+      <div class="text-sm rounded-lg bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2">
+        العمولة المحسوبة: <span class="latin-nums font-semibold" x-text="(total-received).toFixed(2)"></span> {{ funder.currency_code }}
+      </div>
+      <button class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">تأكيد التسوية</button>
+    </div>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}

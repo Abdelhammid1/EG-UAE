@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}أعمار الديون — منصتي{% endblock %}
+{% block content %}
+<div class="mb-6"><h1 class="text-2xl font-bold">أعمار ديون الموردين</h1>
+  <p class="text-slate-500 text-sm">الذمم المفتوحة موزّعة حسب مدة الاستحقاق.</p></div>
+  <a href="{{ url_for('exports.aging') }}" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm">تصدير Excel</a>
+  <a href="{{ url_for('exports.aging', format='pdf') }}" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm">PDF</a>
+
+{% if due %}
+<div class="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+  <div class="font-semibold text-amber-800 mb-2">مستحقات قريبة (خلال 7 أيام)</div>
+  {% for d in due %}
+    <div class="text-sm text-amber-800">{{ d.invoice.number }} — <span class="latin-nums">{{ d.outstanding|money }}</span> · استحقاق <span class="latin-nums">{{ d.invoice.due_date }}</span></div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+      <tr><th class="text-start px-4 py-3">المورد</th><th class="text-end px-4 py-3">0-30</th>
+        <th class="text-end px-4 py-3">31-60</th><th class="text-end px-4 py-3">61-90</th>
+        <th class="text-end px-4 py-3">+90</th><th class="text-end px-4 py-3">الإجمالي</th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for r in rows %}
+        <tr><td class="px-4 py-2.5 font-medium">{{ r.supplier.name_ar }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums">{{ r.buckets['0-30']|money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums">{{ r.buckets['31-60']|money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums">{{ r.buckets['61-90']|money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums text-red-600">{{ r.buckets['90+']|money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums font-bold">{{ r.total|money }}</td></tr>
+      {% else %}<tr><td colspan="6" class="px-4 py-10 text-center text-green-600">✓ لا ذمم مفتوحة.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

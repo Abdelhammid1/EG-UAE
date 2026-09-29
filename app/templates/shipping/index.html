@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}التحويل بين المخازن — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div><h1 class="text-2xl font-bold">التحويل بين المخازن</h1>
+    <p class="text-slate-500 text-sm">إذن تحويل بمراحل: مسودة ← في الطريق ← مستلمة ← مغلقة.</p></div>
+  <a href="{{ url_for('shipping.new') }}" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">+ إذن تحويل</a>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+      <tr><th class="text-start px-4 py-3">الرقم</th><th class="text-start px-4 py-3">من</th>
+        <th class="text-start px-4 py-3">إلى</th><th class="text-end px-4 py-3">قيمة البضاعة</th>
+        <th class="text-center px-4 py-3">الحالة</th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% set sc = {'draft':'bg-amber-50 text-amber-700','sent':'bg-blue-50 text-brand-700','received':'bg-green-50 text-green-700','closed':'bg-slate-100 text-slate-600','cancelled':'bg-red-50 text-red-600'} %}
+      {% for p in permits %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer" onclick="window.location='{{ url_for('shipping.view', pid=p.id) }}'">
+          <td class="px-4 py-2.5 latin-nums font-medium">{{ p.number }}</td>
+          <td class="px-4 py-2.5">{{ p.from_warehouse.name_ar }}</td>
+          <td class="px-4 py-2.5">{{ p.to_warehouse.name_ar }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums">{{ p.goods_book | money }}</td>
+          <td class="px-4 py-2.5 text-center"><span class="px-2 py-0.5 rounded-full text-xs {{ sc.get(p.status,'') }}">{{ p.status_label }}</span></td>
+        </tr>
+      {% else %}<tr><td colspan="5" class="px-4 py-10 text-center text-slate-400">لا أذون تحويل.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

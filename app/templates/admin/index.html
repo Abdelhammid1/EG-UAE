@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}إعدادات الشركة — منصتي{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold">إعدادات الشركة</h1>
+  <p class="text-slate-500 text-sm">
+    شاشة واحدة تضبط كل شيء مرة واحدة. أي تغيير يسري على العمليات الجديدة فقط،
+    والعمليات السابقة تبقى كما سُجلت.
+  </p>
+</div>
+
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  {% set icons = {
+    'company':'🏛️','branches':'🏢','treasury':'🏦','finance':'💰',
+    'inventory':'📦','sales':'🛒','users':'👥'} %}
+  {% for key, label in sections %}
+    <a href="{{ url_for('admin.section', section=key) }}"
+       class="group bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5
+              hover:border-brand-400 hover:shadow-sm transition">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-2xl">{{ icons.get(key, '⚙️') }}</span>
+        <span class="text-xs text-slate-400">{{ counts.get(key, 0) }} إعداد</span>
+      </div>
+      <div class="font-semibold group-hover:text-brand-700">{{ label }}</div>
+      <div class="text-brand-600 text-sm mt-2 opacity-0 group-hover:opacity-100 transition">فتح ←</div>
+    </a>
+  {% endfor %}
+</div>
+{% endblock %}

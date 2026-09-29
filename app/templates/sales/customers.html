@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}العملاء — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div><h1 class="text-2xl font-bold">العملاء</h1>
+    <p class="text-slate-500 text-sm">لكل عميل حساب ذمة مدينة وحد ائتمان وكشف حساب.</p></div>
+  <a href="{{ url_for('exports.customers') }}" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium ms-2">تصدير Excel</a>
+  <a href="{{ url_for('exports.customers', format='pdf') }}" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium ms-2">PDF</a>
+  <a href="{{ url_for('sales.customer_new') }}" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">+ عميل</a>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+      <tr><th class="text-start px-4 py-3">العميل</th><th class="text-start px-4 py-3">النوع</th>
+        <th class="text-end px-4 py-3">حد الائتمان</th><th class="text-end px-4 py-3">الرصيد المدين</th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for c in customers %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer" onclick="window.location='{{ url_for('sales.customer_view', cid=c.id) }}'">
+          <td class="px-4 py-2.5 font-medium">{{ c.name_ar }}</td>
+          <td class="px-4 py-2.5 text-xs">{{ c.type_label }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums text-slate-500">{{ c.credit_limit | money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums font-medium {{ 'text-red-600' if bal[c.id]>0 else '' }}">{{ bal[c.id] | money }} {{ c.currency_code }}</td>
+        </tr>
+      {% else %}<tr><td colspan="4" class="px-4 py-10 text-center text-slate-400">لا عملاء.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

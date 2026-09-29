@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}لوحة المالك — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div><h1 class="text-2xl font-bold">لوحة المالك</h1>
+    <p class="text-slate-500 text-sm">النقدية والمخزون والمديونيات — بعملة الدفاتر (الدرهم).</p></div>
+  <form method="get">
+    <select name="branch_id" onchange="this.form.submit()" class="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2 text-sm outline-none">
+      <option value="">كل الفروع</option>
+      {% for b in branches %}<option value="{{ b.id }}" {% if branch_id==b.id %}selected{% endif %}>{{ b.name_ar }}</option>{% endfor %}
+    </select>
+  </form>
+</div>
+
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 mb-8">
+  {% macro tile(label, value, icon, color) %}
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5" style="box-shadow:var(--sh)">
+      <div class="flex items-center justify-between"><span class="text-slate-500 text-xs">{{ label }}</span><span class="text-lg">{{ icon }}</span></div>
+      <div class="mt-2 text-2xl font-bold latin-nums {{ color }}">{{ value | money }}</div>
+    </div>
+  {% endmacro %}
+  {{ tile('النقدية والبنوك', d.cash, '💵', 'text-brand-700') }}
+  {{ tile('قيمة المخزون', d.inventory, '📦', '') }}
+  {{ tile('ذمم العملاء', d.customers_ar, '👤', '') }}
+  {{ tile('ذمم جهات التمويل', d.funders_ar, '🏦', '') }}
+  {{ tile('ذمم الموردين', d.payables, '🏭', 'text-red-600') }}
+  {{ tile('صافي الربح (السنة)', d.net_income, '📈', 'text-green-700') }}
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6">
+  <!-- branch comparison -->
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 font-semibold">مقارنة الفروع</div>
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+        <tr><th class="text-start px-4 py-2">الفرع</th><th class="text-end px-4 py-2">النقدية</th>
+          <th class="text-end px-4 py-2">المخزون</th><th class="text-end px-4 py-2">صافي الربح</th></tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for b in per_branch %}
+          <tr><td class="px-4 py-2.5 font-medium">{{ b.branch.name_ar }}</td>
+            <td class="px-4 py-2.5 text-end latin-nums">{{ b.cash | money }}</td>
+            <td class="px-4 py-2.5 text-end latin-nums">{{ b.inventory | money }}</td>
+            <td class="px-4 py-2.5 text-end latin-nums {{ 'text-green-700' if b.net_income>=0 else 'text-red-600' }}">{{ b.net_income | money }}</td></tr>
+        {% else %}<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">لا فروع.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <!-- recent sales -->
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 font-semibold">أحدث المبيعات</div>
+    <div class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for s in recent %}
+        <a href="{{ url_for('inventory.sale_view', sale_id=s.id) }}" class="flex items-center gap-3 px-5 py-3 text-sm hover:bg-slate-50 dark:hover:bg-slate-800/40">
+          <span class="latin-nums font-medium">{{ s.number }}</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">{{ {'cash':'نقدي','card':'بطاقة','credit':'آجل','funder':'تمويل','installment':'تقسيط'}.get(s.payment_type, s.payment_type) }}</span>
+          <span class="flex-1"></span>
+          <span class="latin-nums font-semibold">{{ s.total | money }}</span>
+          <span class="text-slate-400 latin-nums text-xs">{{ s.date }}</span>
+        </a>
+      {% else %}<div class="px-5 py-8 text-center text-slate-400 text-sm">لا مبيعات بعد.</div>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

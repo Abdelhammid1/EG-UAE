@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}أين المال؟ — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div><h1 class="text-2xl font-bold">أين المال؟</h1>
+    <p class="text-slate-500 text-sm">كل المال في مكان واحد: الخزائن، البنوك، المحافظ، أرصدة الأشخاص، وجهات التمويل.</p></div>
+  <form method="get" class="flex items-end gap-2">
+    <div><label class="block text-xs text-slate-400 mb-1">الإجمالي بعملة</label>
+      <select name="currency" onchange="this.form.submit()" class="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2 text-sm outline-none">
+        {% for c in currencies %}<option value="{{ c.code }}" {% if display==c.code %}selected{% endif %}>{{ c.code }}</option>{% endfor %}
+      </select></div>
+  </form>
+</div>
+
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden mb-4" style="box-shadow:var(--sh)">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+      <tr><th class="text-start px-4 py-3">العملة</th><th class="text-end px-4 py-3">الخزائن</th>
+        <th class="text-end px-4 py-3">البنوك</th><th class="text-end px-4 py-3">مع الأشخاص</th>
+        <th class="text-end px-4 py-3">جهات التمويل</th><th class="text-end px-4 py-3">الإجمالي بالعملة</th>
+        <th class="text-end px-4 py-3">السعر</th><th class="text-end px-4 py-3">بـ {{ d.display_currency }}</th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for r in d.rows %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+          <td class="px-4 py-2.5 latin-nums font-medium">{{ r.currency }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums">{{ r.treasuries | money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums">{{ r.banks | money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums">{{ r.parties | money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums">{{ r.funders | money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums font-semibold">{{ r.total | money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums text-xs text-slate-400">{{ r.rate }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums font-semibold text-brand-700">{{ r.converted | money }}</td>
+        </tr>
+      {% else %}<tr><td colspan="8" class="px-4 py-10 text-center text-slate-400">لا أموال مسجلة.</td></tr>{% endfor %}
+    </tbody>
+    <tfoot class="bg-brand-50 dark:bg-brand-950 font-bold">
+      <tr><td colspan="7" class="px-4 py-3">الإجمالي العام (بـ {{ d.display_currency }})</td>
+        <td class="px-4 py-3 text-end latin-nums text-brand-700 text-lg">{{ d.grand | money }}</td></tr>
+    </tfoot>
+  </table>
+</div>
+<p class="text-xs text-slate-400">كل رصيد يظهر بعملته الأصلية، والإجمالي محوّل بسعر وقت التقرير.</p>
+{% endblock %}

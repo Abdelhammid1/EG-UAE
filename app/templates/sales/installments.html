@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}الأقساط المتأخرة — منصتي{% endblock %}
+{% block content %}
+<div class="mb-6"><h1 class="text-2xl font-bold">الأقساط المستحقة والمتأخرة</h1>
+  <p class="text-slate-500 text-sm">أقساط تجاوزت تاريخ استحقاقها ولها رصيد متبقٍ.</p></div>
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-w-3xl" style="box-shadow:var(--sh)">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+      <tr><th class="text-start px-4 py-3">العميل</th><th class="text-start px-4 py-3">الفاتورة</th>
+        <th class="text-center px-4 py-3">القسط</th><th class="text-start px-4 py-3">الاستحقاق</th>
+        <th class="text-end px-4 py-3">المتبقي</th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for d in dues %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+          <td class="px-4 py-2.5">{{ d.plan.customer.name_ar }}</td>
+          <td class="px-4 py-2.5 latin-nums text-slate-500">{{ d.plan.sale_id }}</td>
+          <td class="px-4 py-2.5 text-center latin-nums">{{ d.seq }} / {{ d.plan.count }}</td>
+          <td class="px-4 py-2.5 latin-nums text-red-600">{{ d.due_date }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums font-semibold text-red-600">{{ d.outstanding | money }}</td>
+        </tr>
+      {% else %}<tr><td colspan="5" class="px-4 py-10 text-center text-green-600">✓ لا أقساط متأخرة.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

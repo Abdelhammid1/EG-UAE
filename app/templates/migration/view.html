@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}مراجعة الاستيراد — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div class="flex items-center gap-3">
+    <a href="{{ url_for('migration.index') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <div><h1 class="text-2xl font-bold">مراجعة: {{ spec.label }}</h1>
+      <p class="text-slate-500 text-sm latin-nums">{{ batch.filename }} · {{ batch.row_count }} سطر ·
+        {% if batch.error_count %}<span class="text-red-600">{{ batch.error_count }} خطأ</span>{% else %}<span class="text-green-600">لا أخطاء</span>{% endif %}</p></div>
+  </div>
+  {% if batch.status != 'committed' and batch.error_count == 0 and can('accounting.period.close') %}
+    <form method="post" action="{{ url_for('migration.commit', bid=batch.id) }}"
+          onsubmit="return confirm('ترحيل الأرصدة الافتتاحية؟ ستُنشأ الكيانات وقيودها.')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="px-5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">ترحيل الأرصدة</button>
+    </form>
+  {% elif batch.status == 'committed' %}
+    <span class="px-4 py-2 rounded-xl bg-green-50 text-green-700 text-sm font-medium">✓ تم الترحيل</span>
+  {% endif %}
+</div>
+
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+        <tr><th class="text-center px-3 py-3">السطر</th><th class="text-center px-3 py-3">الحالة</th>
+          {% for h in spec.headers %}<th class="text-start px-3 py-3">{{ h }}</th>{% endfor %}
+          <th class="text-start px-3 py-3">الملاحظات</th></tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for r in rows %}
+          <tr class="{% if r._status=='error' %}bg-red-50/50 dark:bg-red-950/20{% endif %}">
+            <td class="px-3 py-2 text-center latin-nums text-slate-400">{{ r._line }}</td>
+            <td class="px-3 py-2 text-center">
+              {% if r._status=='error' %}<span class="text-red-600">✕</span>
+              {% elif r._status=='warn' %}<span class="text-amber-600">⚠</span>
+              {% else %}<span class="text-green-600">✓</span>{% endif %}
+            </td>
+            {% for col in spec.columns %}<td class="px-3 py-2 latin-nums">{{ r.get(col) if r.get(col) is not none else '' }}</td>{% endfor %}
+            <td class="px-3 py-2 text-xs text-red-600">{{ r._errors | join('، ') }}{{ r._warnings | join('، ') }}</td>
+          </tr>
+        {% else %}<tr><td colspan="99" class="px-3 py-8 text-center text-slate-400">لا سطور.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% if batch.error_count %}
+  <p class="text-sm text-red-600 mt-3">صحّح الأسطر ذات الأخطاء في الملف وأعد رفعه — لا يتم الترحيل مع وجود أخطاء.</p>
+{% endif %}
+{% endblock %}

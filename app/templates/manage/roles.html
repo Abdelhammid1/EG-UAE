@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}مصفوفة الصلاحيات — منصتي{% endblock %}
+{% block content %}
+<div class="mb-6"><h1 class="text-2xl font-bold">مصفوفة الصلاحيات</h1>
+  <p class="text-slate-500 text-sm">حدّد ما يفعله كل دور. المالك يملك كل الصلاحيات دائمًا.</p></div>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-x-auto" style="box-shadow:var(--sh)">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+        <tr><th class="text-start px-4 py-3 sticky start-0 bg-slate-50 dark:bg-slate-800">الصلاحية</th>
+          {% for r in roles %}<th class="text-center px-3 py-3">{{ r.name_ar }}</th>{% endfor %}</tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for group, perms in groups.items() %}
+          <tr class="bg-slate-50/60 dark:bg-slate-800/30"><td colspan="{{ roles|length + 1 }}" class="px-4 py-1.5 text-xs font-semibold text-slate-400">{{ group }}</td></tr>
+          {% for p in perms %}
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+              <td class="px-4 py-2">{{ p.label_ar }}</td>
+              {% for r in roles %}
+                <td class="px-3 py-2 text-center">
+                  {% if r.code == 'owner' %}<span class="text-green-600">✓</span>
+                  {% else %}<input type="checkbox" name="role_{{ r.id }}" value="{{ p.id }}" {% if p.id in role_perms[r.id] %}checked{% endif %}>{% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="mt-4"><button class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold">حفظ المصفوفة</button></div>
+</form>
+{% endblock %}

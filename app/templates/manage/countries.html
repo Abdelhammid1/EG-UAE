@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}الدول — منصتي{% endblock %}
+{% block content %}
+<div class="mb-6"><h1 class="text-2xl font-bold">الدول</h1><p class="text-slate-500 text-sm">أضف دولة جديدة دون تعديل برمجي.</p></div>
+<div class="grid lg:grid-cols-2 gap-6">
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <table class="w-full text-sm"><thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs"><tr><th class="text-start px-4 py-3">الدولة</th><th class="text-start px-4 py-3">الرمز</th><th class="text-start px-4 py-3">العملة</th></tr></thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for c in items %}<tr><td class="px-4 py-2.5 font-medium">{{ c.name_ar }}</td><td class="px-4 py-2.5 latin-nums">{{ c.iso_code }}</td><td class="px-4 py-2.5 latin-nums">{{ c.currency_code }}</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+  <form method="post" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-3 h-fit" style="box-shadow:var(--sh)">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="font-semibold">إضافة دولة</div>
+    <input name="name_ar" placeholder="الاسم بالعربية" required class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-500">
+    <div class="grid grid-cols-2 gap-2">
+      <input name="name_en" placeholder="Name (EN)" class="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none">
+      <input name="iso_code" placeholder="الرمز (EG)" required class="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none">
+    </div>
+    <select name="currency_code" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none">{% for cur in currencies %}<option value="{{ cur.code }}">{{ cur.code }} · {{ cur.name_ar }}</option>{% endfor %}</select>
+    <button class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">إضافة</button>
+  </form>
+</div>
+{% endblock %}

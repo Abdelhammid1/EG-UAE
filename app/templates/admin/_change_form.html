@@ -1,0 +1,72 @@
+<div class="fixed inset-0 z-50 grid place-items-center p-4"
+     x-data="{open:true}" x-show="open" x-cloak>
+  <div class="absolute inset-0 bg-black/40" @click="open=false; document.getElementById('setting-modal').innerHTML=''"></div>
+
+  <div class="relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md shadow-xl">
+    <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+      <h3 class="font-bold">تغيير إعداد</h3>
+      <button @click="open=false; document.getElementById('setting-modal').innerHTML=''"
+              class="text-slate-400 hover:text-slate-600">✕</button>
+    </div>
+
+    <form hx-post="{{ url_for('admin.change', key=definition.key) }}"
+          hx-target="#setting-modal" hx-swap="innerHTML"
+          class="p-5 space-y-4">
+
+      <div>
+        <div class="text-sm text-slate-500 mb-1">الإعداد</div>
+        <div class="font-semibold">{{ definition.label_ar }}</div>
+      </div>
+
+      {% if error %}
+        <div class="bg-red-50 text-red-700 border border-red-200 rounded-lg px-3 py-2 text-sm">{{ error }}</div>
+      {% endif %}
+
+      {% if not confirmed %}
+        <!-- Step 1: enter the new value -->
+        <div>
+          <label class="block text-sm font-medium mb-1.5">القيمة الجديدة</label>
+          {% if definition.value_type == 'bool' %}
+            <select name="value" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-500">
+              <option value="true" {% if old_value %}selected{% endif %}>مفعّل</option>
+              <option value="false" {% if not old_value %}selected{% endif %}>غير مفعّل</option>
+            </select>
+          {% else %}
+            <input name="value" value="{{ old_value if old_value is not none else '' }}"
+                   {% if definition.value_type in ('int','decimal') %}inputmode="decimal"{% endif %}
+                   class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none focus:ring-2 focus:ring-brand-500">
+          {% endif %}
+          <p class="text-xs text-slate-400 mt-1">القيمة الحالية: <span class="latin-nums">{{ old_value if old_value is not none else 'غير محددة' }}</span></p>
+        </div>
+        <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">
+          متابعة
+        </button>
+
+      {% else %}
+        <!-- Step 2: confirmation (spec §2) -->
+        <input type="hidden" name="value" value="{{ new_value }}">
+        <input type="hidden" name="confirmed" value="1">
+
+        <div class="rounded-lg border border-slate-200 dark:border-slate-700 divide-y divide-slate-100 dark:divide-slate-800 text-sm">
+          <div class="flex justify-between px-3 py-2"><span class="text-slate-500">الإعداد</span><span class="font-medium">{{ definition.label_ar }}</span></div>
+          <div class="flex justify-between px-3 py-2"><span class="text-slate-500">القيمة القديمة</span><span class="latin-nums">{{ old_value if old_value is not none else 'غير محددة' }}</span></div>
+          <div class="flex justify-between px-3 py-2"><span class="text-slate-500">القيمة الجديدة</span><span class="font-semibold text-brand-700 latin-nums">{{ new_value }}</span></div>
+          <div class="flex justify-between px-3 py-2"><span class="text-slate-500">بداية السريان</span><span class="tnum latin-nums">{{ effective_from.strftime('%Y-%m-%d %H:%M') }}</span></div>
+        </div>
+
+        <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-3 py-2.5 text-sm leading-relaxed">
+          {{ confirm_sentence }}
+        </div>
+
+        <div class="flex gap-2">
+          <button type="button"
+                  @click="document.getElementById('setting-modal').innerHTML=''"
+                  class="flex-1 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 font-medium">إلغاء</button>
+          <button type="submit" class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">
+            تأكيد الحفظ
+          </button>
+        </div>
+      {% endif %}
+    </form>
+  </div>
+</div>

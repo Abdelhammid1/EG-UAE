@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}قيد يدوي جديد — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center gap-3 mb-6">
+  <a href="{{ url_for('accounting.journal') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+  <div>
+    <h1 class="text-2xl font-bold">قيد يدوي جديد</h1>
+    <p class="text-slate-500 text-sm">القيمة بعملة الدفاتر ({{ book_currency }}) تُحسب تلقائيًا. لن يُحفظ القيد إلا متزنًا.</p>
+  </div>
+</div>
+
+<form method="post" action="{{ url_for('accounting.journal_create') }}"
+      x-data="journalForm()" class="space-y-4">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+  <!-- header -->
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 grid sm:grid-cols-3 gap-4" style="box-shadow:var(--sh)">
+    <div>
+      <label class="block text-sm font-medium mb-1.5">التاريخ</label>
+      <input type="date" name="date" value="{{ today }}" required
+             class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none focus:ring-2 focus:ring-brand-500">
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1.5">الفرع</label>
+      <select name="branch_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-500">
+        <option value="">— بدون فرع —</option>
+        {% for b in branches %}<option value="{{ b.id }}">{{ b.name_ar }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1.5">البيان</label>
+      <input name="memo" placeholder="وصف القيد"
+             class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-500">
+    </div>
+  </div>
+
+  <!-- lines -->
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+        <tr>
+          <th class="text-start px-3 py-3">الحساب</th>
+          <th class="text-start px-3 py-3 w-24">الطرف</th>
+          <th class="text-end px-3 py-3 w-32">المبلغ</th>
+          <th class="text-start px-3 py-3 w-24">العملة</th>
+          <th class="text-end px-3 py-3 w-28">سعر الصرف</th>
+          <th class="text-end px-3 py-3 w-32">مكافئ {{ book_currency }}</th>
+          <th class="px-2 py-3 w-10"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        <template x-for="(ln, i) in lines" :key="i">
+          <tr>
+            <td class="px-3 py-2">
+              <select :name="'account_id'" x-model="ln.account_id"
+                      class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                <option value="">— اختر —</option>
+                {% for a in accounts %}<option value="{{ a.id }}">{{ a.code }} · {{ a.name_ar }}</option>{% endfor %}
+              </select>
+            </td>
+            <td class="px-3 py-2">
+              <select name="side" x-model="ln.side"
+                      class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                <option value="debit">مدين</option>
+                <option value="credit">دائن</option>
+              </select>
+            </td>
+            <td class="px-3 py-2">
+              <input name="amount" x-model="ln.amount" inputmode="decimal" placeholder="0.00"
+                     class="w-full text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 latin-nums outline-none focus:ring-2 focus:ring-brand-500">
+            </td>
+            <td class="px-3 py-2">
+              <select name="currency" x-model="ln.currency"
+                      class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                {% for c in currencies %}<option value="{{ c.code }}">{{ c.code }}</option>{% endfor %}
+              </select>
+            </td>
+            <td class="px-3 py-2">
+              <input name="rate" x-model="ln.rate" inputmode="decimal"
+                     :placeholder="ln.currency=='{{ book_currency }}' ? '1' : 'تلقائي'"
+                     :disabled="ln.currency=='{{ book_currency }}'"
+                     class="w-full text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 latin-nums outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-slate-100 dark:disabled:bg-slate-800">
+            </td>
+            <td class="px-3 py-2 text-end latin-nums text-slate-500" x-text="bookOf(ln)"></td>
+            <td class="px-2 py-2 text-center">
+              <button type="button" @click="removeLine(i)" class="text-slate-400 hover:text-red-600">✕</button>
+            </td>
+            <input type="hidden" name="line_memo" value="">
+          </tr>
+        </template>
+      </tbody>
+      <tfoot class="bg-slate-50 dark:bg-slate-800/50">
+        <tr class="text-sm font-semibold">
+          <td colspan="5" class="px-3 py-3 text-start">
+            <button type="button" @click="addLine()" class="text-brand-600 hover:text-brand-700">+ إضافة طرف</button>
+          </td>
+          <td class="px-3 py-3 text-end">
+            <div class="latin-nums">مدين: <span x-text="fmt(totalDebit)"></span></div>
+            <div class="latin-nums">دائن: <span x-text="fmt(totalCredit)"></span></div>
+          </td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- balance status + submit -->
+  <div class="flex items-center justify-between bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4" style="box-shadow:var(--sh)">
+    <div>
+      <template x-if="balanced && totalDebit > 0">
+        <span class="inline-flex items-center gap-2 text-green-700 bg-green-50 px-3 py-1.5 rounded-lg text-sm font-medium">✓ القيد متزن</span>
+      </template>
+      <template x-if="!balanced">
+        <span class="inline-flex items-center gap-2 text-red-700 bg-red-50 px-3 py-1.5 rounded-lg text-sm font-medium">
+          غير متزن — الفرق <span class="latin-nums" x-text="fmt(Math.abs(totalDebit-totalCredit))"></span> {{ book_currency }}
+        </span>
+      </template>
+    </div>
+    <button type="submit" :disabled="!balanced || totalDebit<=0"
+            class="px-6 py-2.5 rounded-xl text-white font-semibold transition
+                   disabled:opacity-40 disabled:cursor-not-allowed bg-brand-600 hover:bg-brand-700">
+      حفظ كمسودة
+    </button>
+  </div>
+  <p class="text-xs text-slate-400">يُحفظ القيد كمسودة، ويعتمده مستخدم آخر (فصل المهام — لا يعتمد القيد من أنشأه).</p>
+</form>
+
+<script>
+function journalForm(){
+  const BOOK = '{{ book_currency }}';
+  return {
+    lines: [
+      {account_id:'', side:'debit', amount:'', currency:BOOK, rate:''},
+      {account_id:'', side:'credit', amount:'', currency:BOOK, rate:''},
+    ],
+    addLine(){ this.lines.push({account_id:'', side:'debit', amount:'', currency:BOOK, rate:''}); },
+    removeLine(i){ if(this.lines.length>1) this.lines.splice(i,1); },
+    rateOf(ln){ return ln.currency===BOOK ? 1 : (parseFloat(ln.rate)||0); },
+    bookVal(ln){ const a=parseFloat(ln.amount)||0; return a*this.rateOf(ln); },
+    bookOf(ln){ const v=this.bookVal(ln); return v? this.fmt(v):'—'; },
+    get totalDebit(){ return this.lines.filter(l=>l.side==='debit').reduce((s,l)=>s+this.bookVal(l),0); },
+    get totalCredit(){ return this.lines.filter(l=>l.side==='credit').reduce((s,l)=>s+this.bookVal(l),0); },
+    get balanced(){ return Math.abs(this.totalDebit-this.totalCredit) < 0.005 && this.totalDebit>0; },
+    fmt(n){ return (n||0).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2}); },
+  }
+}
+</script>
+{% endblock %}

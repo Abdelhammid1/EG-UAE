@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}لوحة المؤشرات — منصتي{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold">مرحبًا، {{ current_user.full_name }}</h1>
+  <p class="text-slate-500 text-sm">لوحة المؤشرات العامة للنظام</p>
+</div>
+
+<!-- stat tiles -->
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+  {% macro tile(label, value, icon, hint) %}
+    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5">
+      <div class="flex items-center justify-between">
+        <span class="text-slate-500 text-sm">{{ label }}</span>
+        <span class="text-2xl">{{ icon }}</span>
+      </div>
+      <div class="mt-2 text-3xl font-bold tnum latin-nums">{{ value }}</div>
+      <div class="mt-1 text-xs text-slate-400">{{ hint }}</div>
+    </div>
+  {% endmacro %}
+  {{ tile('الفروع', stats.branches, '🏢', 'عدد مفتوح — تُضاف من الإعدادات') }}
+  {{ tile('المستخدمون', stats.users, '👥', 'أدوار وصلاحيات قابلة للتعديل') }}
+  {{ tile('أحداث التدقيق', stats.audit_events, '📝', 'سجل للقراءة فقط') }}
+</div>
+
+<!-- recent audit -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+  <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+    <h2 class="font-semibold">آخر الأحداث</h2>
+    {% if can('audit.view') %}
+    <a href="{{ url_for('main.audit_log') }}" class="text-sm text-brand-600 hover:underline">عرض السجل كاملًا ←</a>
+    {% endif %}
+  </div>
+  <div class="divide-y divide-slate-100 dark:divide-slate-800">
+    {% for e in recent_audit %}
+      <div class="px-5 py-3 flex items-center gap-3 text-sm">
+        <span class="w-2 h-2 rounded-full bg-brand-500 shrink-0"></span>
+        <span class="font-medium">{{ e.action }}</span>
+        <span class="text-slate-400">{{ e.entity or '' }}</span>
+        <span class="flex-1"></span>
+        <span class="text-slate-400 tnum latin-nums">{{ e.at.strftime('%Y-%m-%d %H:%M') }}</span>
+        <span class="text-slate-500">{{ e.user_name or '—' }}</span>
+      </div>
+    {% else %}
+      <div class="px-5 py-8 text-center text-slate-400 text-sm">لا توجد أحداث بعد.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

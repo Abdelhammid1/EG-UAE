@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}{{ party.name_ar }} — منصتي{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto" x-data="{op:'pay'}">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('parties.index') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <div><h1 class="text-2xl font-bold">{{ party.name_ar }}</h1>
+      <p class="text-slate-500 text-sm latin-nums">{{ party.phone or '' }}
+        {% for t in party.type_list %}· {{ {'person':'شخص','customer':'عميل','supplier':'مورد','rep':'مندوب','funder':'جهة تمويل'}.get(t,t) }}{% endfor %}</p></div>
+  </div>
+
+  <!-- per-currency summary tiles -->
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+    {% for s in summary %}
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4" style="box-shadow:var(--sh)">
+        <div class="text-xs text-slate-400 mb-1">الرصيد بـ {{ s.currency }}</div>
+        <div class="text-2xl font-bold latin-nums">{{ s.remaining | money }}</div>
+        <div class="text-[11px] text-slate-400 mt-1 latin-nums">أخذ {{ s.took|money(0) }} · ردّ {{ s.returned|money(0) }} · صرف {{ s.spent|money(0) }}</div>
+      </div>
+    {% else %}<div class="col-span-full text-slate-400 text-sm">لا أرصدة بعد — نفّذ أول عملية أدناه.</div>{% endfor %}
+  </div>
+
+  <!-- operations -->
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 mb-6" style="box-shadow:var(--sh)">
+    <div class="grid grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 text-sm">
+      <button type="button" @click="op='pay'" :class="op=='pay'?'bg-white dark:bg-slate-900 shadow font-semibold':'text-slate-500'" class="py-2 rounded-lg">صرف له</button>
+      <button type="button" @click="op='refund'" :class="op=='refund'?'bg-white dark:bg-slate-900 shadow font-semibold':'text-slate-500'" class="py-2 rounded-lg">استرداد</button>
+      <button type="button" @click="op='spend'" :class="op=='spend'?'bg-white dark:bg-slate-900 shadow font-semibold':'text-slate-500'" class="py-2 rounded-lg">صرف منه</button>
+      <button type="button" @click="op='transfer'" :class="op=='transfer'?'bg-white dark:bg-slate-900 shadow font-semibold':'text-slate-500'" class="py-2 rounded-lg">تحويل لطرف</button>
+    </div>
+
+    {% macro tsel(name) %}<select name="{{ name }}" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none">{% for t in treasuries %}<option value="{{ t.id }}">{{ t.name_ar }} ({{ t.currency_code }})</option>{% endfor %}</select>{% endmacro %}
+    {% macro csel(name) %}<select name="{{ name }}" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none">{% for c in currencies %}<option value="{{ c.code }}">{{ c.code }}</option>{% endfor %}</select>{% endmacro %}
+    {% set inp = 'w-full text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none focus:ring-2 focus:ring-brand-500' %}
+
+    <!-- pay -->
+    <form x-show="op=='pay'" method="post" action="{{ url_for('parties.pay', pid=party.id) }}" class="grid sm:grid-cols-4 gap-3 items-end">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div><label class="block text-xs text-slate-400 mb-1">من خزينة</label>{{ tsel('treasury_id') }}</div>
+      <div><label class="block text-xs text-slate-400 mb-1">المبلغ المرسل</label><input name="amount" inputmode="decimal" class="{{ inp }}"></div>
+      <div><label class="block text-xs text-slate-400 mb-1">تُسجَّل بعملة (اختياري)</label>{{ csel('party_currency') }}</div>
+      <div><label class="block text-xs text-slate-400 mb-1">سعر صرف (إن اختلفت)</label><input name="rate" inputmode="decimal" placeholder="تلقائي" class="{{ inp }}"></div>
+      <button class="sm:col-span-4 bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 rounded-lg">صرف للطرف</button>
+    </form>
+    <!-- refund -->
+    <form x-show="op=='refund'" x-cloak method="post" action="{{ url_for('parties.refund', pid=party.id) }}" class="grid sm:grid-cols-4 gap-3 items-end">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div><label class="block text-xs text-slate-400 mb-1">إلى خزينة</label>{{ tsel('treasury_id') }}</div>
+      <div><label class="block text-xs text-slate-400 mb-1">المبلغ (بعملة الطرف)</label><input name="amount" inputmode="decimal" class="{{ inp }}"></div>
+      <div><label class="block text-xs text-slate-400 mb-1">عملة الطرف</label>{{ csel('party_currency') }}</div>
+      <div><label class="block text-xs text-slate-400 mb-1">سعر صرف (إن اختلفت)</label><input name="rate" inputmode="decimal" placeholder="تلقائي" class="{{ inp }}"></div>
+      <button class="sm:col-span-4 bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 rounded-lg">استرداد</button>
+    </form>
+    <!-- spend -->
+    <form x-show="op=='spend'" x-cloak method="post" action="{{ url_for('parties.spend', pid=party.id) }}" class="grid sm:grid-cols-4 gap-3 items-end">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="sm:col-span-2"><label class="block text-xs text-slate-400 mb-1">حساب المصروف</label>
+        <select name="expense_account_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none">{% for a in expense_accounts %}<option value="{{ a.id }}">{{ a.name_ar }}</option>{% endfor %}</select></div>
+      <div><label class="block text-xs text-slate-400 mb-1">المبلغ</label><input name="amount" inputmode="decimal" class="{{ inp }}"></div>
+      <div><label class="block text-xs text-slate-400 mb-1">العملة</label>{{ csel('currency') }}</div>
+      <button class="sm:col-span-4 bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 rounded-lg">تسجيل المصروف</button>
+    </form>
+    <!-- transfer -->
+    <form x-show="op=='transfer'" x-cloak method="post" action="{{ url_for('parties.transfer', pid=party.id) }}" class="grid sm:grid-cols-4 gap-3 items-end">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="sm:col-span-2"><label class="block text-xs text-slate-400 mb-1">إلى طرف</label>
+        <select name="to_party_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none">{% for op2 in other_parties %}<option value="{{ op2.id }}">{{ op2.name_ar }}</option>{% endfor %}</select></div>
+      <div><label class="block text-xs text-slate-400 mb-1">المبلغ</label><input name="amount" inputmode="decimal" class="{{ inp }}"></div>
+      <div><label class="block text-xs text-slate-400 mb-1">العملة</label>{{ csel('currency') }}</div>
+      <button class="sm:col-span-4 bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 rounded-lg">تحويل</button>
+    </form>
+  </div>
+
+  <!-- statements per currency -->
+  {% for a in accounts %}
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden mb-4" style="box-shadow:var(--sh)">
+      <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+        <span class="font-semibold">كشف حساب — {{ a.pa.currency_code }}</span>
+        <span class="latin-nums font-bold">{{ a.balance | money }} {{ a.pa.currency_code }}</span>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+          <tr><th class="text-start px-4 py-2">التاريخ</th><th class="text-start px-4 py-2">البيان</th>
+            <th class="text-end px-4 py-2">له (وارد)</th><th class="text-end px-4 py-2">عليه (صادر)</th><th class="text-end px-4 py-2">الرصيد</th></tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          {% for r in a.rows %}
+            <tr><td class="px-4 py-2 latin-nums text-slate-500">{{ r.entry.date }}</td>
+              <td class="px-4 py-2 max-w-[220px] truncate">{{ r.entry.memo or '—' }}</td>
+              <td class="px-4 py-2 text-end latin-nums text-green-700">{% if r.line.debit_original and r.line.debit_original|float>0 %}{{ r.line.debit_original|money }}{% endif %}</td>
+              <td class="px-4 py-2 text-end latin-nums text-red-600">{% if r.line.credit_original and r.line.credit_original|float>0 %}{{ r.line.credit_original|money }}{% endif %}</td>
+              <td class="px-4 py-2 text-end latin-nums font-medium">{{ r.balance|money }}</td></tr>
+          {% else %}<tr><td colspan="5" class="px-4 py-6 text-center text-slate-400">لا حركات.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

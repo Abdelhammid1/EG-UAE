@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtualenv
+.venv/
+venv/
+env/
+
+# Secrets / environment
+.env
+*.env.local
+
+# Flask instance folder (runtime data: SQLite DB, uploads, backups, scratch)
+instance/
+
+# Runtime user uploads (product images, attachments) — created on demand
+app/static/uploads/
+
+# Backups & databases
+backups/
+*.sqlite
+*.sqlite.bak
+*.db
+*.bak
+
+# Logs
+*.log
+
+# Test / build caches
+.pytest_cache/
+.mypy_cache/
+static/css/app.build.css
+migrations/versions/*.pyc
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}سجل التدقيق — منصتي{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold">سجل التدقيق</h1>
+  <a href="{{ url_for('exports.audit_log') }}" class="text-sm text-brand-600 hover:underline">تصدير Excel ←</a>
+  <a href="{{ url_for('exports.audit_log', format='pdf') }}" class="text-sm text-brand-600 hover:underline ms-3">PDF ←</a>
+  <p class="text-slate-500 text-sm">سجل للقراءة فقط — لا يمكن لأي مستخدم تعديله أو حذفه (المادة 15).</p>
+</div>
+
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs uppercase">
+        <tr>
+          <th class="text-start px-4 py-3 font-semibold">الوقت</th>
+          <th class="text-start px-4 py-3 font-semibold">المستخدم</th>
+          <th class="text-start px-4 py-3 font-semibold">العملية</th>
+          <th class="text-start px-4 py-3 font-semibold">الكيان</th>
+          <th class="text-start px-4 py-3 font-semibold">القيمة القديمة</th>
+          <th class="text-start px-4 py-3 font-semibold">القيمة الجديدة</th>
+          <th class="text-start px-4 py-3 font-semibold">الجهاز</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for e in entries %}
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+            <td class="px-4 py-3 whitespace-nowrap tnum latin-nums text-slate-500">{{ e.at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+            <td class="px-4 py-3 whitespace-nowrap">{{ e.user_name or '—' }}</td>
+            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded bg-brand-50 text-brand-700 text-xs">{{ e.action }}</span></td>
+            <td class="px-4 py-3 text-slate-500">{{ e.entity or '—' }}{% if e.entity_id %} #{{ e.entity_id }}{% endif %}</td>
+            <td class="px-4 py-3 text-slate-400 max-w-[180px] truncate">{{ e.old_value or '—' }}</td>
+            <td class="px-4 py-3 text-slate-700 dark:text-slate-200 max-w-[180px] truncate">{{ e.new_value or '—' }}</td>
+            <td class="px-4 py-3 text-slate-400 tnum latin-nums">{{ e.ip_address or '—' }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7" class="px-4 py-10 text-center text-slate-400">لا توجد أحداث مسجلة بعد.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

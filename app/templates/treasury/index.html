@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}الخزائن والحسابات — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div>
+    <h1 class="text-2xl font-bold">الخزائن والحسابات البنكية</h1>
+    <p class="text-slate-500 text-sm">كل خزينة وحساب لها قيدها المحاسبي — والرصيد يُقرأ من دفتر الأستاذ مباشرة.</p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{{ url_for('treasury.treasury_new') }}" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">+ خزينة</a>
+    <a href="{{ url_for('treasury.bank_new') }}" class="px-4 py-2 rounded-xl bg-brand-900 hover:bg-brand-800 text-white text-sm font-medium">+ حساب بنكي</a>
+    <a href="{{ url_for('treasury.transfer') }}" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">🔁 تحويل</a>
+  </div>
+</div>
+
+{% if pending %}
+<div class="mb-6 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+  <div class="font-semibold text-amber-800 mb-2">تحويلات بانتظار اعتماد المالك</div>
+  <div class="space-y-2">
+    {% for t in pending %}
+      <div class="flex items-center justify-between text-sm bg-white rounded-lg px-3 py-2">
+        <span>{{ t.kind_label }} · <span class="latin-nums">{{ t.amount_original | money }} {{ t.currency_code }}</span> · {{ t.memo or '' }}</span>
+        {% if current_user.has_role('owner') %}
+        <form method="post" action="{{ url_for('treasury.approve', txn_id=t.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="px-3 py-1 rounded-lg bg-brand-600 text-white text-xs">اعتماد وترحيل</button>
+        </form>
+        {% else %}<span class="text-xs text-amber-600">بانتظار المالك</span>{% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% macro entity_card(e, kind, icon) %}
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 {% if not e.is_active %}opacity-60{% endif %}" style="box-shadow:var(--sh)">
+    <div class="flex items-start justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-950 grid place-items-center text-lg">{{ icon }}</div>
+        <div>
+          <a href="{{ url_for('treasury.statement', kind=kind, eid=e.id) }}" class="font-semibold hover:text-brand-700">{{ e.name_ar }}</a>
+          <div class="text-xs text-slate-400">
+            {% if kind=='treasury' %}{{ e.type_label }}{% else %}{{ e.bank_name }} · {{ e.account_number }}{% endif %}
+            · {{ e.branch.name_ar }}
+          </div>
+        </div>
+      </div>
+      <span class="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 latin-nums">{{ e.currency_code }}</span>
+    </div>
+    <div class="mt-4 flex items-end justify-between">
+      <div>
+        <div class="text-xs text-slate-400">الرصيد الحالي</div>
+        <div class="text-2xl font-bold latin-nums">{{ balance(e) | money }} <span class="text-sm text-slate-400">{{ e.currency_code }}</span></div>
+      </div>
+      <div class="flex gap-1.5">
+        <a href="{{ url_for('treasury.move', kind=kind, eid=e.id) }}" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50">إيداع/سحب</a>
+        {% if kind=='bank' %}<a href="{{ url_for('treasury.reconcile', eid=e.id) }}" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50">مطابقة</a>{% endif %}
+      </div>
+    </div>
+  </div>
+{% endmacro %}
+
+<div class="mb-8">
+  <h2 class="text-sm font-semibold text-slate-400 uppercase mb-3">الخزائن</h2>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {% for t in treasuries %}{{ entity_card(t, 'treasury', '💵') }}{% else %}
+      <div class="text-slate-400 text-sm col-span-full py-6 text-center bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300">لا توجد خزائن.</div>
+    {% endfor %}
+  </div>
+</div>
+
+<div>
+  <h2 class="text-sm font-semibold text-slate-400 uppercase mb-3">الحسابات البنكية</h2>
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {% for b in banks %}{{ entity_card(b, 'bank', '🏦') }}{% else %}
+      <div class="text-slate-400 text-sm col-span-full py-6 text-center bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300">لا توجد حسابات بنكية.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}دليل الحسابات — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold">دليل الحسابات</h1>
+    <p class="text-slate-500 text-sm">هيكل هرمي — الحسابات التجميعية للتصنيف، والحسابات النهائية فقط تقبل الترحيل.</p>
+  </div>
+  <a href="{{ url_for('accounting.account_new') }}"
+     class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">+ حساب جديد</a>
+</div>
+
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+      <tr>
+        <th class="text-start px-4 py-3">الرمز</th>
+        <th class="text-start px-4 py-3">الاسم</th>
+        <th class="text-start px-4 py-3">النوع</th>
+        <th class="text-start px-4 py-3">الترحيل</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% set type_colors = {
+        'asset':'bg-blue-50 text-brand-700','liability':'bg-orange-50 text-orange-700',
+        'equity':'bg-purple-50 text-purple-700','revenue':'bg-green-50 text-green-700',
+        'expense':'bg-red-50 text-red-700'} %}
+      {% for a in accounts %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+          <td class="px-4 py-2.5 latin-nums font-medium text-slate-500">{{ a.code }}</td>
+          <td class="px-4 py-2.5 {% if not a.is_postable %}font-semibold{% else %}ps-8{% endif %}">{{ a.name_ar }}</td>
+          <td class="px-4 py-2.5"><span class="px-2 py-0.5 rounded text-xs {{ type_colors.get(a.type,'') }}">{{ a.type_label }}</span></td>
+          <td class="px-4 py-2.5 text-slate-400">{{ 'نعم' if a.is_postable else 'تجميعي' }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4" class="px-4 py-10 text-center text-slate-400">لا توجد حسابات — أنشئ الدليل الافتراضي بأمر seed.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

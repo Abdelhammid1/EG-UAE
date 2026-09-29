@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}مورد جديد — منصتي{% endblock %}
+{% block content %}
+<div class="max-w-lg mx-auto">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('purchasing.suppliers') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <h1 class="text-2xl font-bold">مورد جديد</h1>
+  </div>
+  <form method="post" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4" style="box-shadow:var(--sh)">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div><label class="block text-sm font-medium mb-1.5">اسم المورد</label>
+      <input name="name_ar" required class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-500"></div>
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="block text-sm font-medium mb-1.5">الهاتف</label>
+        <input name="phone" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none focus:ring-2 focus:ring-brand-500"></div>
+      <div><label class="block text-sm font-medium mb-1.5">العملة</label>
+        <select name="currency_code" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-500">
+          {% for c in currencies %}<option value="{{ c.code }}">{{ c.code }} · {{ c.name_ar }}</option>{% endfor %}
+        </select></div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="block text-sm font-medium mb-1.5">مدة السداد (يوم)</label>
+        <input name="payment_terms_days" inputmode="numeric" value="0" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none focus:ring-2 focus:ring-brand-500"></div>
+      <div><label class="block text-sm font-medium mb-1.5">رصيد افتتاحي (مستحق له)</label>
+        <input name="opening_balance" inputmode="decimal" value="0" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none focus:ring-2 focus:ring-brand-500"></div>
+    </div>
+    <div class="flex gap-2 pt-2">
+      <button class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">حفظ</button>
+      <a href="{{ url_for('purchasing.suppliers') }}" class="px-6 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 font-medium">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

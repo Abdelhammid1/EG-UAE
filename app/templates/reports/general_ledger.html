@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}كشف حساب عام — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div><h1 class="text-2xl font-bold">كشف حساب عام</h1>
+    <p class="text-slate-500 text-sm">اختر حسابًا لعرض حركاته ورصيده الجاري.</p></div>
+  <form method="get" class="flex items-end gap-2 flex-wrap">
+    <div><label class="block text-xs text-slate-400 mb-1">الحساب</label>
+      <select name="account_id" class="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-1.5 text-sm outline-none min-w-[220px]">
+        <option value="">— اختر —</option>
+        {% for a in accounts %}<option value="{{ a.id }}" {% if account_id==a.id %}selected{% endif %}>{{ a.code }} · {{ a.name_ar }}</option>{% endfor %}
+      </select></div>
+    <div><label class="block text-xs text-slate-400 mb-1">من</label><input type="date" name="start" value="{{ start }}" class="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-1.5 text-sm latin-nums outline-none"></div>
+    <div><label class="block text-xs text-slate-400 mb-1">إلى</label><input type="date" name="end" value="{{ end }}" class="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-1.5 text-sm latin-nums outline-none"></div>
+    <button class="px-4 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">عرض</button>
+  </form>
+</div>
+{% if account %}
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+  <div class="px-5 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold">{{ account.code }} · {{ account.name_ar }}</div>
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+      <tr><th class="text-start px-4 py-2">التاريخ</th><th class="text-start px-4 py-2">القيد</th><th class="text-start px-4 py-2">البيان</th>
+        <th class="text-end px-4 py-2">مدين</th><th class="text-end px-4 py-2">دائن</th><th class="text-end px-4 py-2">الرصيد</th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for row in rows %}
+        <tr><td class="px-4 py-2 latin-nums text-slate-500">{{ row.entry.date }}</td>
+          <td class="px-4 py-2"><a class="latin-nums text-brand-600 hover:underline" href="{{ url_for('accounting.journal_view', entry_id=row.entry.id) }}">{{ row.entry.number }}</a></td>
+          <td class="px-4 py-2 max-w-[240px] truncate">{{ row.entry.memo or '—' }}</td>
+          <td class="px-4 py-2 text-end latin-nums">{% if row.line.debit_book and row.line.debit_book|float>0 %}{{ row.line.debit_book|money }}{% endif %}</td>
+          <td class="px-4 py-2 text-end latin-nums">{% if row.line.credit_book and row.line.credit_book|float>0 %}{{ row.line.credit_book|money }}{% endif %}</td>
+          <td class="px-4 py-2 text-end latin-nums font-medium">{{ row.balance|money }}</td></tr>
+      {% else %}<tr><td colspan="6" class="px-4 py-10 text-center text-slate-400">لا حركات في الفترة.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 p-10 text-center text-slate-400">اختر حسابًا لعرض كشفه.</div>
+{% endif %}
+{% endblock %}

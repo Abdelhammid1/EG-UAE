@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}جهات التمويل — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div><h1 class="text-2xl font-bold">جهات التمويل</h1>
+    <p class="text-slate-500 text-sm">تابي/تمارا — الذمم بانتظار التسوية والعمولات. لا قيم افتراضية.</p></div>
+  <a href="{{ url_for('sales.funder_new') }}" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">+ جهة تمويل</a>
+</div>
+<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+  {% for f in funders %}
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5" style="box-shadow:var(--sh)">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2"><div class="w-9 h-9 rounded-lg bg-brand-50 dark:bg-brand-950 grid place-items-center">🏦</div>
+          <span class="font-semibold">{{ f.name_ar }}</span></div>
+        <span class="text-xs text-slate-400 latin-nums">عمولة {{ f.commission_pct | money }}%</span>
+      </div>
+      <div class="text-xs text-slate-400">ذمم مفتوحة (بانتظار التسوية)</div>
+      <div class="text-2xl font-bold latin-nums mb-3">{{ bal[f.id] | money }} {{ f.currency_code }}</div>
+      <a href="{{ url_for('sales.funder_settle', fid=f.id) }}" class="inline-block w-full text-center px-3 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">تسوية</a>
+    </div>
+  {% else %}
+    <div class="text-slate-400 text-sm col-span-full py-6 text-center bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300">لا توجد جهات تمويل.</div>
+  {% endfor %}
+</div>
+{% endblock %}

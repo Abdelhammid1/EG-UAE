@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}المصادقة الثنائية — منصتي{% endblock %}
+{% block content %}
+<div class="max-w-lg mx-auto">
+  <h1 class="text-2xl font-bold mb-6">المصادقة الثنائية (2FA)</h1>
+  {% if current_user.totp_enabled %}
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6" style="box-shadow:var(--sh)">
+      <div class="flex items-center gap-2 text-green-700 mb-4">✓ المصادقة الثنائية مفعّلة على حسابك.</div>
+      <form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="action" value="disable">
+        <button class="px-4 py-2 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 text-sm">إيقاف المصادقة الثنائية</button></form>
+    </div>
+  {% else %}
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4" style="box-shadow:var(--sh)">
+      <p class="text-sm text-slate-500">١) افتح تطبيق Google Authenticator وأضف حسابًا بإدخال هذا المفتاح:</p>
+      <div class="latin-nums font-mono text-lg bg-slate-50 dark:bg-slate-800 rounded-lg p-3 text-center select-all">{{ secret }}</div>
+      <p class="text-xs text-slate-400 break-all">{{ uri }}</p>
+      <form method="post" class="space-y-3">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="enable">
+        <input type="hidden" name="secret" value="{{ secret }}">
+        <label class="block text-sm font-medium">٢) أدخل الرمز الظاهر في التطبيق للتأكيد:</label>
+        <input name="code" inputmode="numeric" placeholder="______" class="w-full text-center tracking-widest rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none focus:ring-2 focus:ring-brand-500">
+        <button class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">تفعيل</button>
+      </form>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

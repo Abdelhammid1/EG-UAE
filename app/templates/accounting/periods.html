@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}الفترات المحاسبية — منصتي{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold">الفترات المحاسبية</h1>
+  <p class="text-slate-500 text-sm">لا يُرحَّل أي قيد إلى فترة مقفلة. الإقفال وإعادة الفتح يتطلبان اعتماد المالك.</p>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+        <tr>
+          <th class="text-start px-4 py-3">الفترة</th>
+          <th class="text-start px-4 py-3">من — إلى</th>
+          <th class="text-center px-4 py-3">الحالة</th>
+          <th class="text-end px-4 py-3">إجراء</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for p in periods %}
+          <tr>
+            <td class="px-4 py-2.5 font-medium">{{ p.name }}</td>
+            <td class="px-4 py-2.5 latin-nums text-slate-500">{{ p.start_date }} — {{ p.end_date }}</td>
+            <td class="px-4 py-2.5 text-center">
+              {% if p.is_open %}<span class="px-2 py-0.5 rounded-full text-xs bg-green-50 text-green-700">مفتوحة</span>
+              {% else %}<span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-600">مقفلة</span>{% endif %}
+            </td>
+            <td class="px-4 py-2.5 text-end">
+              {% if can('accounting.period.close') %}
+                {% if p.is_open %}
+                  <form method="post" action="{{ url_for('accounting.period_close', period_id=p.id) }}" class="inline"
+                        onsubmit="return confirm('إقفال الفترة {{ p.name }}؟')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="text-sm text-slate-600 hover:text-red-600">إقفال</button>
+                  </form>
+                {% else %}
+                  <form method="post" action="{{ url_for('accounting.period_reopen', period_id=p.id) }}" class="inline"
+                        onsubmit="return confirm('إعادة فتح الفترة {{ p.name }}؟')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="text-sm text-brand-600 hover:text-brand-700">إعادة فتح</button>
+                  </form>
+                {% endif %}
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4" class="px-4 py-10 text-center text-slate-400">لا توجد فترات.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if can('accounting.period.close') %}
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5" style="box-shadow:var(--sh)">
+    <h2 class="font-semibold mb-4">فترة جديدة</h2>
+    <form method="post" class="space-y-3">
+      {{ form.hidden_tag() }}
+      {% for f in [form.name, form.start_date, form.end_date] %}
+        <div>
+          <label class="block text-sm font-medium mb-1.5">{{ f.label.text }}</label>
+          {{ f(class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none focus:ring-2 focus:ring-brand-500") }}
+        </div>
+      {% endfor %}
+      <button class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">إنشاء</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

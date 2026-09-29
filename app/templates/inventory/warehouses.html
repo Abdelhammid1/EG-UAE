@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}المخازن — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold">المخازن</h1>
+    <p class="text-slate-500 text-sm">الكميات الحالية لكل مخزن.</p>
+  </div>
+  <a href="{{ url_for('inventory.receive') }}" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">📥 استلام مخزون</a>
+</div>
+<div class="grid gap-4 md:grid-cols-2">
+  {% for r in rows %}
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5" style="box-shadow:var(--sh)">
+      <div class="flex items-center gap-2 mb-3">
+        <div class="w-9 h-9 rounded-lg bg-brand-50 dark:bg-brand-950 grid place-items-center">🏬</div>
+        <div><div class="font-semibold">{{ r.wh.name_ar }}</div>
+          <div class="text-xs text-slate-400">{{ r.wh.branch.name_ar }}</div></div>
+      </div>
+      <div class="space-y-1.5">
+        {% for s in r.stock %}
+          <div class="flex items-center justify-between text-sm">
+            <span>{{ s.product.name_ar }}</span>
+            <span class="latin-nums font-medium">{{ s.qty | money(0) }} {{ s.product.unit }}</span>
+          </div>
+        {% else %}
+          <div class="text-slate-400 text-sm text-center py-3">لا يوجد مخزون.</div>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <div class="text-slate-400 text-sm col-span-full py-6 text-center bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300">لا توجد مخازن.</div>
+  {% endfor %}
+</div>
+{% endblock %}

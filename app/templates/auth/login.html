@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}تسجيل الدخول — منصتي{% endblock %}
+
+{% block auth_content %}
+<div class="min-h-screen grid lg:grid-cols-2">
+  <!-- brand panel -->
+  <div class="hidden lg:flex flex-col justify-between p-12 brand-gradient text-white relative overflow-hidden">
+    <div class="flex items-center gap-3">
+      <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="منصتي" class="w-12 h-12 bg-white/95 rounded-xl p-1">
+      <span class="text-2xl font-display font-extrabold">منصتي</span>
+    </div>
+    <div>
+      <h1 class="text-4xl font-display font-bold leading-tight mb-4">النظام المحاسبي والإداري</h1>
+      <p class="text-blue-100 text-lg leading-relaxed">
+        محاسبة ومخازن ونقطة بيع لشركة واحدة في مصر والإمارات، بعملة دفاتر واحدة،
+        وكل حركة مالية لها قيدها.
+      </p>
+    </div>
+    <div class="text-brand-200 text-sm">© منصتي — جميع الحقوق محفوظة</div>
+    <div class="absolute -bottom-24 -start-24 w-72 h-72 rounded-full bg-white/5"></div>
+    <div class="absolute -top-16 -end-16 w-56 h-56 rounded-full bg-white/5"></div>
+  </div>
+
+  <!-- form panel -->
+  <div class="flex items-center justify-center p-6">
+    <div class="w-full max-w-sm">
+      <div class="lg:hidden flex items-center gap-2 justify-center mb-8">
+        <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="منصتي" class="w-10 h-10">
+        <span class="text-xl font-display font-extrabold text-brand-900">منصتي</span>
+      </div>
+
+      <h2 class="text-2xl font-bold mb-1">تسجيل الدخول</h2>
+      <p class="text-slate-500 text-sm mb-6">أدخل بياناتك للوصول إلى النظام</p>
+
+      <form method="post" class="space-y-4">
+        {{ form.hidden_tag() }}
+        <div>
+          <label class="block text-sm font-medium mb-1.5">{{ form.username.label.text }}</label>
+          {{ form.username(class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none", autofocus=true) }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1.5">{{ form.password.label.text }}</label>
+          {{ form.password(class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none") }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1.5 text-slate-500">{{ form.otp.label.text }} <span class="text-xs">(إن كانت مفعّلة)</span></label>
+          {{ form.otp(class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 tnum focus:ring-2 focus:ring-brand-500 outline-none", inputmode="numeric", placeholder="______") }}
+        </div>
+        <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+          {{ form.remember() }} {{ form.remember.label.text }}
+        </label>
+        <button type="submit"
+                class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg transition">
+          دخول
+        </button>
+      </form>
+
+      <div class="mt-6 text-xs text-slate-400 bg-slate-50 dark:bg-slate-900 rounded-lg p-3 leading-relaxed">
+        بيانات تجريبية — المالك: <b>owner / owner123</b> · مدير النظام: <b>admin / admin123</b>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

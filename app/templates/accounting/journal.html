@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}القيود اليومية — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold">القيود اليومية</h1>
+    <p class="text-slate-500 text-sm">القيد المرحّل لا يُعدَّل ولا يُحذف — التصحيح بقيد عكسي.</p>
+  </div>
+  <a href="{{ url_for('accounting.journal_new') }}"
+     class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">+ قيد يدوي</a>
+</div>
+
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+      <tr>
+        <th class="text-start px-4 py-3">الرقم</th>
+        <th class="text-start px-4 py-3">التاريخ</th>
+        <th class="text-start px-4 py-3">البيان</th>
+        <th class="text-start px-4 py-3">المصدر</th>
+        <th class="text-end px-4 py-3">القيمة (مدين)</th>
+        <th class="text-center px-4 py-3">الحالة</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for e in entries %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer"
+            onclick="window.location='{{ url_for('accounting.journal_view', entry_id=e.id) }}'">
+          <td class="px-4 py-2.5 latin-nums font-medium">{{ e.number or '—' }}</td>
+          <td class="px-4 py-2.5 latin-nums text-slate-500">{{ e.date }}</td>
+          <td class="px-4 py-2.5 max-w-[280px] truncate">{{ e.memo or '—' }}</td>
+          <td class="px-4 py-2.5 text-slate-400 text-xs">{{ e.source_doc_type }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums">{{ e.total_debit_book | money }}</td>
+          <td class="px-4 py-2.5 text-center">
+            {% if e.is_posted %}
+              <span class="px-2 py-0.5 rounded-full text-xs bg-green-50 text-green-700">مرحّل</span>
+            {% else %}
+              <span class="px-2 py-0.5 rounded-full text-xs bg-amber-50 text-amber-700">مسودة</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="px-4 py-10 text-center text-slate-400">لا توجد قيود بعد.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

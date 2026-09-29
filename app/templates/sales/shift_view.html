@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}وردية {{ shift.number }} — منصتي{% endblock %}
+{% block content %}
+<div class="max-w-lg mx-auto">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('inventory.pos') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <h1 class="text-2xl font-bold flex items-center gap-2">وردية <span class="latin-nums">{{ shift.number }}</span>
+      {% if shift.status=='closed' %}<span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600">مغلقة</span>
+      {% else %}<span class="text-xs px-2 py-0.5 rounded bg-green-50 text-green-700">مفتوحة</span>{% endif %}</h1>
+  </div>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-3" style="box-shadow:var(--sh)">
+    <div class="flex justify-between text-sm"><span class="text-slate-500">الكاشير</span><span>{{ shift.cashier.full_name }}</span></div>
+    <div class="flex justify-between text-sm"><span class="text-slate-500">الدرج</span><span>{{ shift.drawer.name_ar }}</span></div>
+    <div class="flex justify-between text-sm"><span class="text-slate-500">رصيد افتتاحي</span><span class="latin-nums">{{ shift.opening_cash | money }}</span></div>
+    <div class="flex justify-between text-sm"><span class="text-slate-500">مبيعات نقدية</span><span class="latin-nums">{{ cash_sales | money }}</span></div>
+    {% if shift.status=='closed' %}
+      <div class="flex justify-between text-sm"><span class="text-slate-500">المتوقع</span><span class="latin-nums">{{ shift.expected_cash | money }}</span></div>
+      <div class="flex justify-between text-sm"><span class="text-slate-500">الفعلي</span><span class="latin-nums">{{ shift.counted_cash | money }}</span></div>
+      <div class="flex justify-between font-bold pt-2 border-t border-slate-200 dark:border-slate-800">
+        <span>العجز / الزيادة</span>
+        <span class="latin-nums {{ 'text-green-600' if shift.over_short==0 else ('text-brand-700' if shift.over_short>0 else 'text-red-600') }}">{{ shift.over_short | money }}</span>
+      </div>
+      {% if shift.journal_entry_id %}<a href="{{ url_for('accounting.journal_view', entry_id=shift.journal_entry_id) }}" class="text-sm text-brand-600 hover:underline">📒 قيد العجز/الزيادة</a>{% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

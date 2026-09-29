@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}تنبيهات إعادة الطلب — منصتي{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold">تنبيهات إعادة الطلب</h1>
+  <p class="text-slate-500 text-sm">منتجات وصلت لحد إعادة الطلب أو أقل.</p>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden max-w-2xl" style="box-shadow:var(--sh)">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+      <tr><th class="text-start px-4 py-3">المنتج</th>
+        <th class="text-end px-4 py-3">المتاح</th>
+        <th class="text-end px-4 py-3">حد إعادة الطلب</th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for a in alerts %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+          <td class="px-4 py-2.5 font-medium">{{ a.product.name_ar }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums text-red-600 font-semibold">{{ a.on_hand | money(0) }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums text-slate-500">{{ a.product.reorder_level | money(0) }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="3" class="px-4 py-10 text-center text-green-600">✓ لا توجد منتجات تحت حد إعادة الطلب.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

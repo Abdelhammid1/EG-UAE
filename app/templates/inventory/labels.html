@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}ملصقات الباركود — منصتي{% endblock %}
+{% block content %}
+<div class="no-print flex items-center justify-between mb-4 flex-wrap gap-3">
+  <div class="flex items-center gap-3">
+    <a href="{{ url_for('inventory.products') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <h1 class="text-2xl font-bold">ملصقات الباركود</h1>
+  </div>
+  <div class="flex items-center gap-2">
+    <form method="get" class="flex items-center gap-2">
+      <label class="text-sm text-slate-500">عدد النسخ لكل صنف</label>
+      <input name="count" type="number" min="1" value="{{ count }}" class="w-20 text-center rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-1.5 latin-nums outline-none">
+      <button class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-sm">تحديث</button>
+    </form>
+    <button onclick="window.print()" class="px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">🖨️ طباعة</button>
+  </div>
+</div>
+
+{% if not products %}
+<div class="no-print bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">لا توجد منتجات لها باركود. أضف باركود للمنتج أولًا.</div>
+{% endif %}
+
+<div class="labels-sheet grid grid-cols-3 gap-2">
+  {% for p, svg in products %}
+    {% for _ in range(count) %}
+    <div class="label border border-slate-200 rounded-lg p-2 text-center bg-white">
+      <div class="text-xs font-semibold truncate mb-0.5">{{ p.name_ar }}</div>
+      <div class="text-[11px] text-slate-600 latin-nums mb-1">{{ p.default_price | money }} د.إ</div>
+      <div class="barcode flex justify-center">{{ svg | safe if svg else p.barcode }}</div>
+    </div>
+    {% endfor %}
+  {% endfor %}
+</div>
+
+<style>
+  .label .barcode svg { width: 100%; height: auto; max-height: 60px; }
+  @media print {
+    .no-print, aside, header, nav, .app-sidebar { display: none !important; }
+    body { background: #fff !important; }
+    .labels-sheet { grid-template-columns: repeat(3, 1fr); gap: 4px; }
+    .label { break-inside: avoid; page-break-inside: avoid; border: 1px solid #ccc; }
+  }
+</style>
+{% endblock %}

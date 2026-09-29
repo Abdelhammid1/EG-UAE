@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}أسعار الصرف — منصتي{% endblock %}
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-bold">أسعار الصرف</h1>
+  <p class="text-slate-500 text-sm">كل سعر يُستخدم يُحفظ في السجل بمصدره ومن أدخله. عند غياب السعر تُطلب الإضافة اليدوية.</p>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+        <tr>
+          <th class="text-start px-4 py-3">من → إلى</th>
+          <th class="text-end px-4 py-3">السعر</th>
+          <th class="text-start px-4 py-3">المصدر</th>
+          <th class="text-start px-4 py-3">التاريخ</th>
+          <th class="text-start px-4 py-3">أدخله</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for r in rates %}
+          <tr>
+            <td class="px-4 py-2.5 latin-nums font-medium">{{ r.from_currency }} → {{ r.to_currency }}</td>
+            <td class="px-4 py-2.5 text-end latin-nums">{{ r.rate }}</td>
+            <td class="px-4 py-2.5"><span class="px-2 py-0.5 rounded text-xs {{ 'bg-blue-50 text-brand-700' if r.source=='auto' else 'bg-slate-100 text-slate-600' }}">{{ 'تلقائي' if r.source=='auto' else 'يدوي' }}</span></td>
+            <td class="px-4 py-2.5 latin-nums text-slate-500">{{ r.at.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td class="px-4 py-2.5 text-slate-500">{{ r.entered_by.full_name if r.entered_by else '—' }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="5" class="px-4 py-10 text-center text-slate-400">لا توجد أسعار مسجلة.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5" style="box-shadow:var(--sh)">
+    <h2 class="font-semibold mb-4">تسجيل سعر يدوي</h2>
+    <form method="post" class="space-y-3">
+      {{ form.hidden_tag() }}
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-medium mb-1.5">{{ form.from_currency.label.text }}</label>
+          {{ form.from_currency(class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-500") }}
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1.5">{{ form.to_currency.label.text }}</label>
+          {{ form.to_currency(class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-500") }}
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1.5">{{ form.rate.label.text }}</label>
+        {{ form.rate(class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none focus:ring-2 focus:ring-brand-500", placeholder="مثال: 13.5") }}
+      </div>
+      <button class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">تسجيل</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

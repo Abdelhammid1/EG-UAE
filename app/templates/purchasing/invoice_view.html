@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}فاتورة {{ invoice.number }} — منصتي{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('purchasing.invoices') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <div class="flex-1"><h1 class="text-2xl font-bold">فاتورة شراء <span class="latin-nums">{{ invoice.number }}</span></h1>
+      <p class="text-slate-500 text-sm latin-nums">{{ invoice.date }} · {{ invoice.warehouse.name_ar }}
+        · {{ {'cash':'نقدي','credit':'آجل','custody':'عهدة'}[invoice.payment_type] }}
+        {% if invoice.supplier %}· {{ invoice.supplier.name_ar }}{% endif %}</p></div>
+  </div>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden mb-4" style="box-shadow:var(--sh)">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+        <tr><th class="text-start px-4 py-3">الصنف</th><th class="text-center px-4 py-3">الكمية</th>
+          <th class="text-end px-4 py-3">التكلفة</th><th class="text-end px-4 py-3">الإجمالي</th></tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for l in invoice.lines %}
+          <tr><td class="px-4 py-2.5">{{ l.product.name_ar }}</td>
+            <td class="px-4 py-2.5 text-center latin-nums">{{ l.qty|money(0) }}</td>
+            <td class="px-4 py-2.5 text-end latin-nums">{{ l.unit_cost|money }}</td>
+            <td class="px-4 py-2.5 text-end latin-nums font-medium">{{ l.line_total|money }}</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot class="bg-slate-50 dark:bg-slate-800/50 font-bold">
+        <tr><td colspan="3" class="px-4 py-3">الإجمالي</td><td class="px-4 py-3 text-end latin-nums">{{ invoice.total|money }} {{ invoice.currency_code }}</td></tr>
+        {% if invoice.payment_type=='credit' %}
+        <tr><td colspan="3" class="px-4 py-2 text-slate-500 font-normal">المتبقي</td>
+          <td class="px-4 py-2 text-end latin-nums {{ 'text-red-600' if outstanding>0 else 'text-green-600' }}">{{ outstanding|money }}</td></tr>
+        {% endif %}
+      </tfoot>
+    </table>
+  </div>
+  {% if invoice.payment_type in ["cash","credit"] %}
+    <form method="post" action="{{ url_for('purchasing.invoice_return', inv_id=invoice.id) }}" onsubmit="return confirm('تسجيل مرتجع كامل لهذه الفاتورة؟')" class="mb-4"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-sm font-medium">مرتجع مشتريات</button></form>
+  {% endif %}
+  {% if invoice.journal_entry_id %}
+    <a href="{{ url_for('accounting.journal_view', entry_id=invoice.journal_entry_id) }}" class="inline-flex items-center gap-2 text-sm text-brand-600 hover:underline">📒 عرض القيد المحاسبي ←</a>
+  {% endif %}
+</div>
+{% endblock %}

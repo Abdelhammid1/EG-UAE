@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}عرض سعر جديد — منصتي{% endblock %}
+{% block content %}
+<div x-data="qt()" class="max-w-3xl mx-auto">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('sales.quotes') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <h1 class="text-2xl font-bold">عرض سعر جديد</h1>
+  </div>
+  <form method="post" class="space-y-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 grid sm:grid-cols-3 gap-4" style="box-shadow:var(--sh)">
+      <div><label class="block text-sm font-medium mb-1.5">المخزن</label>
+        <select name="warehouse_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none">{% for w in warehouses %}<option value="{{ w.id }}">{{ w.name_ar }}</option>{% endfor %}</select></div>
+      <div><label class="block text-sm font-medium mb-1.5">العميل</label>
+        <select name="customer_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none"><option value="">— بدون —</option>{% for c in customers %}<option value="{{ c.id }}">{{ c.name_ar }}</option>{% endfor %}</select></div>
+      <div><label class="block text-sm font-medium mb-1.5">صالح حتى</label>
+        <input type="date" name="valid_until" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm latin-nums outline-none"></div>
+    </div>
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs"><tr><th class="text-start px-3 py-3">الصنف</th><th class="text-end px-3 py-3 w-28">الكمية</th><th class="text-end px-3 py-3 w-32">السعر</th><th class="w-10"></th></tr></thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          <template x-for="(ln,i) in lines" :key="i">
+            <tr><td class="px-3 py-2"><select name="product_id" x-model="ln.pid" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 text-sm outline-none"><option value="">— اختر —</option>{% for p in products %}<option value="{{ p.id }}">{{ p.name_ar }}</option>{% endfor %}</select></td>
+              <td class="px-3 py-2"><input name="qty" x-model="ln.qty" inputmode="decimal" class="w-full text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 latin-nums outline-none"></td>
+              <td class="px-3 py-2"><input name="price" x-model="ln.price" inputmode="decimal" class="w-full text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 latin-nums outline-none"></td>
+              <td class="px-2 py-2 text-center"><button type="button" @click="lines.splice(i,1)" class="text-slate-400 hover:text-red-600">✕</button></td></tr>
+          </template>
+        </tbody>
+        <tfoot class="bg-slate-50 dark:bg-slate-800/50"><tr><td colspan="4" class="px-3 py-3"><button type="button" @click="lines.push({pid:'',qty:1,price:0})" class="text-brand-600 hover:text-brand-700">+ إضافة صنف</button></td></tr></tfoot>
+      </table>
+    </div>
+    <div class="flex justify-end"><button class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold">حفظ العرض</button></div>
+  </form>
+</div>
+<script>function qt(){ return { lines:[{pid:'',qty:1,price:0}] }; }</script>
+{% endblock %}

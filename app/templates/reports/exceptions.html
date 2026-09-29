@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}تقارير الاستثناءات — منصتي{% endblock %}
+{% block content %}
+<div class="mb-6"><h1 class="text-2xl font-bold">تقارير الاستثناءات والمخالفات</h1>
+  <p class="text-slate-500 text-sm">مراقبة العمليات الحساسة: البيع تحت الحد الأدنى، العجز والزيادة، المرتجعات، تغييرات الإعدادات.</p></div>
+
+<div class="grid lg:grid-cols-2 gap-6">
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold text-sm">البيع تحت الحد الأدنى</div>
+    <table class="w-full text-sm"><tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for e in x.below_min %}<tr><td class="px-4 py-2 latin-nums text-slate-500">{{ e.at.strftime('%Y-%m-%d %H:%M') }}</td><td class="px-4 py-2">{{ e.user_name or '—' }}</td><td class="px-4 py-2 text-xs latin-nums">{{ e.new_value or '' }}</td></tr>
+      {% else %}<tr><td colspan="3" class="px-4 py-6 text-center text-green-600">✓ لا مخالفات.</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold text-sm">العجز والزيادة في الورديات</div>
+    <table class="w-full text-sm"><tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for s in x.over_short %}<tr><td class="px-4 py-2 latin-nums">{{ s.number }}</td><td class="px-4 py-2">{{ s.cashier.full_name }}</td><td class="px-4 py-2 text-end latin-nums {{ 'text-red-600' if s.over_short<0 else 'text-brand-700' }}">{{ s.over_short | money }}</td></tr>
+      {% else %}<tr><td colspan="3" class="px-4 py-6 text-center text-green-600">✓ لا فروقات.</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold text-sm">المرتجعات</div>
+    <table class="w-full text-sm"><tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for r in x.returns %}<tr><td class="px-4 py-2 latin-nums">{{ r.number }}</td><td class="px-4 py-2 latin-nums text-slate-500">{{ r.date }}</td><td class="px-4 py-2 text-end latin-nums">{{ r.total | money }}</td></tr>
+      {% else %}<tr><td colspan="3" class="px-4 py-6 text-center text-slate-400">لا مرتجعات.</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold text-sm">تغييرات الأسعار والإعدادات</div>
+    <table class="w-full text-sm"><tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for e in x.price_changes %}<tr><td class="px-4 py-2 latin-nums text-slate-500">{{ e.at.strftime('%Y-%m-%d %H:%M') }}</td><td class="px-4 py-2">{{ e.user_name or '—' }}</td><td class="px-4 py-2 text-xs">{{ e.entity_id or e.entity or '' }}</td></tr>
+      {% else %}<tr><td colspan="3" class="px-4 py-6 text-center text-slate-400">لا تغييرات.</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+</div>
+{% endblock %}

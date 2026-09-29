@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}سداد مورد — منصتي{% endblock %}
+{% block content %}
+<div class="max-w-xl mx-auto">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('purchasing.supplier_view', sid=supplier.id) }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <div><h1 class="text-2xl font-bold">سداد — {{ supplier.name_ar }}</h1>
+      <p class="text-slate-500 text-sm">اربط الدفعة بفاتورة أو أكثر. يُحسب فرق العملة المحقق تلقائيًا.</p></div>
+  </div>
+  <form method="post" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4" style="box-shadow:var(--sh)">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="block text-sm font-medium mb-1.5">المبلغ ({{ supplier.currency_code }})</label>
+        <input name="amount" inputmode="decimal" class="w-full text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none focus:ring-2 focus:ring-brand-500"></div>
+      <div><label class="block text-sm font-medium mb-1.5">الدفع من</label>
+        <select name="pay_from_account_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+          {% for aid, lbl in sources %}<option value="{{ aid }}">{{ lbl }}</option>{% endfor %}</select></div>
+    </div>
+    {% if invoices %}
+      <div>
+        <div class="text-sm font-medium mb-2">تخصيص على الفواتير المفتوحة</div>
+        <div class="space-y-2">
+          {% for i in invoices %}
+            <div class="flex items-center gap-3 text-sm border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2">
+              <span class="latin-nums flex-1">{{ i.number }} · متبقٍ {{ outstanding(i)|money }}</span>
+              <input name="alloc_{{ i.id }}" inputmode="decimal" placeholder="0.00" class="w-28 text-end rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-900 px-2 py-1 latin-nums outline-none focus:ring-2 focus:ring-brand-500">
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+    <button class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">تسجيل السداد</button>
+  </form>
+</div>
+{% endblock %}

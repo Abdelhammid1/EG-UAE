@@ -1,0 +1,52 @@
+<div class="bg-white dark:bg-slate-900 rounded-xl border {% if saved %}border-brand-400{% else %}border-slate-200 dark:border-slate-800{% endif %} p-5"
+     id="row-{{ row.def.key }}"{% if oob %} hx-swap-oob="true"{% endif %}>
+  <div class="flex items-start justify-between gap-4">
+    <div class="min-w-0">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="font-semibold">{{ row.def.label_ar }}</span>
+        {% if row.def.is_locked %}
+          <span class="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">🔒 مقفول بعد أول حركة</span>
+        {% elif row.def.locks_after_first_use %}
+          <span class="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-600">يُقفل بعد أول حركة</span>
+        {% endif %}
+        {% if row.def.requires_owner_approval %}
+          <span class="text-xs px-2 py-0.5 rounded bg-brand-50 text-brand-600">يحتاج اعتماد المالك</span>
+        {% endif %}
+      </div>
+      <div class="mt-1 text-sm text-slate-500">
+        القيمة الحالية:
+        <span class="font-medium text-slate-800 dark:text-slate-100 latin-nums">
+          {% if row.current is none %}<span class="text-slate-400">غير محددة</span>
+          {% elif row.current is boolean %}{{ 'مفعّل' if row.current else 'غير مفعّل' }}
+          {% else %}{{ row.current }}{% endif %}
+        </span>
+      </div>
+      <code class="text-xs text-slate-400">{{ row.def.key }}</code>
+    </div>
+
+    {% if not row.def.is_locked %}
+    <button hx-get="{{ url_for('admin.change', key=row.def.key) }}"
+            hx-target="#setting-modal" hx-swap="innerHTML"
+            class="shrink-0 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">
+      تغيير
+    </button>
+    {% endif %}
+  </div>
+
+  {% if row.history %}
+    <details class="mt-3 group">
+      <summary class="cursor-pointer text-xs text-slate-400 hover:text-slate-600 select-none">
+        سجل التغييرات ({{ row.history|length }})
+      </summary>
+      <div class="mt-2 space-y-1 ps-3 border-s-2 border-slate-100 dark:border-slate-800">
+        {% for v in row.history %}
+          <div class="text-xs text-slate-500 flex items-center gap-2">
+            <span class="tnum latin-nums">{{ v.effective_from.strftime('%Y-%m-%d %H:%M') }}</span>
+            <span class="font-medium latin-nums">{{ v.value_text }}</span>
+            <span class="text-slate-400">— {{ v.created_by.full_name if v.created_by else 'النظام' }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    </details>
+  {% endif %}
+</div>

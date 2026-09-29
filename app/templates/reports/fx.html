@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}فروق العملة — منصتي{% endblock %}
+{% block content %}
+<div class="mb-6"><h1 class="text-2xl font-bold">تقرير فروق العملة</h1>
+  <p class="text-slate-500 text-sm">المحققة تنشأ عند السداد الفعلي، وغير المحققة بإعادة التقييم عند الإقفال.</p></div>
+
+<div class="grid md:grid-cols-2 gap-6 max-w-3xl">
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5" style="box-shadow:var(--sh)">
+    <div class="font-semibold mb-3">الفروق المحققة (خلال الفترة)</div>
+    <div class="flex justify-between py-2 text-sm"><span class="text-slate-500">أرباح فروق العملة</span><span class="latin-nums text-green-700">{{ (realized_gain or 0) | money }}</span></div>
+    <div class="flex justify-between py-2 text-sm"><span class="text-slate-500">خسائر فروق العملة</span><span class="latin-nums text-red-600">{{ (realized_loss or 0) | money }}</span></div>
+  </div>
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5" style="box-shadow:var(--sh)">
+    <div class="font-semibold mb-3">إعادة التقييم غير المحققة (عند الإقفال)</div>
+    <p class="text-xs text-slate-400 mb-3">يعيد تقييم الأرصدة بالعملات الأجنبية بسعر الإقفال، ويُنشئ قيد فروق يُعكس تلقائيًا أول الفترة التالية (المادة 5).</p>
+    <form method="post" action="{{ url_for('reports.fx_revalue', period_id=periods[0].id) if periods else '#' }}"
+          onsubmit="return confirm('تنفيذ إعادة تقييم فروق العملة غير المحققة لآخر فترة؟')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="flex items-center gap-2">
+        <select name="period_id" disabled class="flex-1 rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 text-sm outline-none">
+          {% for p in periods %}<option>{{ p.name }} ({{ p.status_label if p.status_label is defined else p.status }})</option>{% endfor %}
+        </select>
+        <button {% if not periods %}disabled{% endif %} class="px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium disabled:opacity-40">إعادة تقييم</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

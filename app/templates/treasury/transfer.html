@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}تحويل — منصتي{% endblock %}
+{% block content %}
+{% set ent_json = [] %}
+<div class="max-w-2xl mx-auto" x-data="transferForm()">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('treasury.index') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <div>
+      <h1 class="text-2xl font-bold">تحويل بين الخزائن والحسابات</h1>
+      <p class="text-slate-500 text-sm">نفس العملة = تحويل مباشر. عملتان مختلفتان = تحويل بسعر صرف مع تسجيل الفرق.</p>
+    </div>
+  </div>
+
+  <form method="post" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4" style="box-shadow:var(--sh)">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium mb-1.5">من</label>
+        <select name="src" x-model="src" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="">— اختر —</option>
+          {% for kind, e in entities %}
+            <option value="{{ kind }}:{{ e.id }}" data-cur="{{ e.currency_code }}">{{ e.name_ar }} ({{ e.currency_code }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1.5">إلى</label>
+        <select name="dst" x-model="dst" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="">— اختر —</option>
+          {% for kind, e in entities %}
+            <option value="{{ kind }}:{{ e.id }}" data-cur="{{ e.currency_code }}">{{ e.name_ar }} ({{ e.currency_code }})</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium mb-1.5">المبلغ المرسل <span class="text-slate-400" x-text="srcCur"></span></label>
+        <input name="amount" x-model="amount" inputmode="decimal" placeholder="0.00" class="w-full text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+      <div>
+        <label class="block text-sm font-medium mb-1.5">التاريخ</label>
+        <input type="date" name="date" value="{{ today }}" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 latin-nums outline-none focus:ring-2 focus:ring-brand-500">
+      </div>
+    </div>
+
+    <!-- FX block: only when currencies differ -->
+    <div x-show="isFx" x-cloak class="rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 p-4 space-y-3">
+      <div class="text-sm font-medium text-amber-800">تحويل بعملتين مختلفتين</div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs mb-1">سعر صرف <span x-text="srcCur"></span> → {{ book_currency }}</label>
+          <input name="src_rate" x-model="srcRate" inputmode="decimal" placeholder="تلقائي إن وُجد" class="w-full text-end rounded-lg border border-slate-300 px-3 py-2 latin-nums text-sm outline-none focus:ring-2 focus:ring-brand-500">
+        </div>
+        <div>
+          <label class="block text-xs mb-1">سعر صرف <span x-text="dstCur"></span> → {{ book_currency }}</label>
+          <input name="dst_rate" x-model="dstRate" inputmode="decimal" placeholder="تلقائي إن وُجد" class="w-full text-end rounded-lg border border-slate-300 px-3 py-2 latin-nums text-sm outline-none focus:ring-2 focus:ring-brand-500">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs mb-1">المبلغ المستلم فعليًا <span x-text="dstCur"></span></label>
+          <input name="received_amount" x-model="received" inputmode="decimal" placeholder="0.00" class="w-full text-end rounded-lg border border-slate-300 px-3 py-2 latin-nums text-sm outline-none focus:ring-2 focus:ring-brand-500">
+        </div>
+        <div>
+          <label class="block text-xs mb-1">مصروف بنكي (اختياري، {{ book_currency }})</label>
+          <input name="bank_fee" inputmode="decimal" placeholder="0.00" class="w-full text-end rounded-lg border border-slate-300 px-3 py-2 latin-nums text-sm outline-none focus:ring-2 focus:ring-brand-500">
+        </div>
+      </div>
+      <p class="text-xs text-amber-700">يُسجَّل الفرق في القيمة الدفترية كأرباح/خسائر فروق عملة تلقائيًا (المادة 13).</p>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium mb-1.5">البيان</label>
+      <input name="memo" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-500">
+    </div>
+
+    <template x-if="src && dst && src===dst">
+      <p class="text-sm text-red-600">لا يمكن التحويل إلى نفس الكيان.</p>
+    </template>
+
+    <button type="submit" :disabled="!src || !dst || src===dst"
+            class="w-full bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">
+      تنفيذ التحويل
+    </button>
+  </form>
+</div>
+
+<script>
+function transferForm(){
+  return {
+    src:'', dst:'', amount:'', srcRate:'', dstRate:'', received:'',
+    curOf(val){ if(!val) return ''; const o=document.querySelector(`option[value="${val}"]`); return o?o.dataset.cur:''; },
+    get srcCur(){ return this.curOf(this.src); },
+    get dstCur(){ return this.curOf(this.dst); },
+    get isFx(){ return this.srcCur && this.dstCur && this.srcCur!==this.dstCur; },
+  }
+}
+</script>
+{% endblock %}

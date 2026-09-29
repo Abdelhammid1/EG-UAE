@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}مطابقة الأعمدة — منصتي{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <div class="flex items-center gap-3 mb-2">
+    <a href="{{ url_for('migration.index') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <h1 class="text-2xl font-bold">مطابقة الأعمدة</h1>
+  </div>
+  <p class="text-slate-500 text-sm mb-6">طابق أعمدة ملفك مع حقول النظام. تم اقتراح المطابقة تلقائيًا — عدّلها إن لزم ثم تابع. الملف: <span class="latin-nums">{{ batch.filename }}</span></p>
+
+  <form method="post" class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4" style="box-shadow:var(--sh)">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% for col in spec.columns %}
+    <div class="grid grid-cols-2 gap-4 items-center">
+      <label class="text-sm font-medium">{{ spec.headers[loop.index0] if loop.index0 < spec.headers|length else col }}</label>
+      <select name="map_{{ col }}" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2 text-sm outline-none">
+        <option value="-1">— تجاهل هذا الحقل —</option>
+        {% for h in headers %}
+          <option value="{{ loop.index0 }}" {{ 'selected' if suggested.get(col) == loop.index0 }}>{{ h or ('عمود ' ~ (loop.index0+1)) }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    {% endfor %}
+
+    <div class="pt-2">
+      <div class="text-xs text-slate-400 mb-2">معاينة أول صفوف الملف:</div>
+      <div class="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+        <table class="w-full text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500">
+            <tr>{% for h in headers %}<th class="px-2 py-1.5 text-start whitespace-nowrap">{{ h or ('عمود ' ~ (loop.index0+1)) }}</th>{% endfor %}</tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            {% for r in preview %}
+            <tr>{% for c in r %}<td class="px-2 py-1.5 whitespace-nowrap">{{ c if c is not none else '' }}</td>{% endfor %}</tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="flex gap-2 pt-2">
+      <button class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">متابعة والتحقق</button>
+      <a href="{{ url_for('migration.index') }}" class="px-6 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 font-medium">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

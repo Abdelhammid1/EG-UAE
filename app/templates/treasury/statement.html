@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}كشف {{ entity.name_ar }} — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div class="flex items-center gap-3">
+    <a href="{{ url_for('treasury.index') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <div>
+      <h1 class="text-2xl font-bold">{{ entity.name_ar }}</h1>
+      <p class="text-slate-500 text-sm">كشف حركة بعملة الكيان ({{ entity.currency_code }}) — دون تحويل.</p>
+    </div>
+  </div>
+  <div class="text-end">
+    <div class="text-xs text-slate-400">الرصيد الحالي</div>
+    <div class="text-2xl font-bold latin-nums">{{ balance | money }} {{ entity.currency_code }}</div>
+    <a href="{{ url_for('treasury.move', kind=kind, eid=entity.id) }}" class="text-sm text-brand-600 hover:underline">+ إيداع/سحب</a>
+  </div>
+</div>
+
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+      <tr>
+        <th class="text-start px-4 py-3">التاريخ</th>
+        <th class="text-start px-4 py-3">القيد</th>
+        <th class="text-start px-4 py-3">البيان</th>
+        <th class="text-end px-4 py-3">وارد</th>
+        <th class="text-end px-4 py-3">صادر</th>
+        <th class="text-end px-4 py-3">الرصيد</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for r in rows %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+          <td class="px-4 py-2.5 latin-nums text-slate-500">{{ r.entry.date }}</td>
+          <td class="px-4 py-2.5"><a class="latin-nums text-brand-600 hover:underline" href="{{ url_for('accounting.journal_view', entry_id=r.entry.id) }}">{{ r.entry.number }}</a></td>
+          <td class="px-4 py-2.5 max-w-[260px] truncate">{{ r.entry.memo or '—' }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums text-green-700">{% if r.line.debit_original and r.line.debit_original|float > 0 %}{{ r.line.debit_original | money }}{% endif %}</td>
+          <td class="px-4 py-2.5 text-end latin-nums text-red-600">{% if r.line.credit_original and r.line.credit_original|float > 0 %}{{ r.line.credit_original | money }}{% endif %}</td>
+          <td class="px-4 py-2.5 text-end latin-nums font-medium">{{ r.balance | money }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6" class="px-4 py-10 text-center text-slate-400">لا توجد حركات بعد.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

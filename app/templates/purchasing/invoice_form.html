@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}فاتورة شراء — منصتي{% endblock %}
+{% block content %}
+<div x-data="pinv()" class="max-w-4xl mx-auto">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('purchasing.invoices') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <div><h1 class="text-2xl font-bold">فاتورة شراء</h1>
+      <p class="text-slate-500 text-sm">تزيد المخزون وتُنشئ القيد المحاسبي حسب طريقة السداد.</p></div>
+  </div>
+
+  <form method="post" class="space-y-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 grid sm:grid-cols-2 lg:grid-cols-4 gap-4" style="box-shadow:var(--sh)">
+      <div><label class="block text-sm font-medium mb-1.5">المخزن</label>
+        <select name="warehouse_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+          {% for w in warehouses %}<option value="{{ w.id }}">{{ w.name_ar }}</option>{% endfor %}</select></div>
+      <div><label class="block text-sm font-medium mb-1.5">المورد</label>
+        <select name="supplier_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="">— بدون —</option>
+          {% for s in suppliers %}<option value="{{ s.id }}">{{ s.name_ar }}</option>{% endfor %}</select></div>
+      <div><label class="block text-sm font-medium mb-1.5">طريقة السداد</label>
+        <select name="payment_type" x-model="ptype" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="cash">نقدي</option><option value="credit">آجل (ذمة مورد)</option>
+          <option value="custody">من عهدة</option></select></div>
+      <div x-show="ptype=='cash'"><label class="block text-sm font-medium mb-1.5">الدفع من</label>
+        <select name="pay_from_account_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+          {% for aid, lbl, cur in sources %}<option value="{{ aid }}">{{ lbl }} ({{ cur }})</option>{% endfor %}</select></div>
+      <div x-show="ptype=='custody'" x-cloak><label class="block text-sm font-medium mb-1.5">العهدة</label>
+        <select name="custody_id" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+          {% for c in custodies %}<option value="{{ c.id }}">{{ c.name_ar }}</option>{% endfor %}</select></div>
+      <div x-show="ptype=='credit'" x-cloak><label class="block text-sm font-medium mb-1.5">تاريخ الاستحقاق</label>
+        <input type="date" name="due_date" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 text-sm latin-nums outline-none focus:ring-2 focus:ring-brand-500"></div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+          <tr><th class="text-start px-3 py-3">الصنف</th><th class="text-end px-3 py-3 w-28">الكمية</th>
+            <th class="text-end px-3 py-3 w-32">تكلفة الوحدة</th><th class="text-end px-3 py-3 w-32">الإجمالي</th><th class="w-10"></th></tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          <template x-for="(ln,i) in lines" :key="i">
+            <tr>
+              <td class="px-3 py-2">
+                <select name="product_id" x-model="ln.pid" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500">
+                  <option value="">— اختر —</option>
+                  {% for p in products %}<option value="{{ p.id }}">{{ p.name_ar }}</option>{% endfor %}</select></td>
+              <td class="px-3 py-2"><input name="qty" x-model.number="ln.qty" inputmode="decimal" class="w-full text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 latin-nums outline-none focus:ring-2 focus:ring-brand-500"></td>
+              <td class="px-3 py-2"><input name="cost" x-model.number="ln.cost" inputmode="decimal" class="w-full text-end rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-2 py-2 latin-nums outline-none focus:ring-2 focus:ring-brand-500"></td>
+              <td class="px-3 py-2 text-end latin-nums" x-text="fmt(ln.qty*ln.cost)"></td>
+              <td class="px-2 py-2 text-center"><button type="button" @click="lines.splice(i,1)" class="text-slate-400 hover:text-red-600">✕</button></td>
+            </tr>
+          </template>
+        </tbody>
+        <tfoot class="bg-slate-50 dark:bg-slate-800/50 font-semibold">
+          <tr><td colspan="3" class="px-3 py-3"><button type="button" @click="lines.push({pid:'',qty:1,cost:0})" class="text-brand-600 hover:text-brand-700">+ إضافة صنف</button></td>
+            <td class="px-3 py-3 text-end latin-nums" x-text="fmt(total)"></td><td></td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="flex justify-end">
+      <button type="submit" :disabled="total<=0" class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold disabled:opacity-40">تسجيل الفاتورة</button>
+    </div>
+  </form>
+</div>
+<script>
+function pinv(){ return {
+  ptype:'cash', lines:[{pid:'',qty:1,cost:0}],
+  get total(){ return this.lines.reduce((s,l)=>s+(l.qty*l.cost||0),0); },
+  fmt(n){ return (n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); },
+}}
+</script>
+{% endblock %}

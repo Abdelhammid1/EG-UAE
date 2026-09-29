@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}قيد {{ entry.number or entry.id }} — منصتي{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('accounting.journal') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <div class="flex-1">
+      <h1 class="text-2xl font-bold flex items-center gap-3">
+        قيد <span class="latin-nums">{{ entry.number or ('مسودة #' ~ entry.id) }}</span>
+        {% if entry.is_posted %}
+          <span class="px-2 py-0.5 rounded-full text-xs bg-green-50 text-green-700">مرحّل</span>
+        {% else %}
+          <span class="px-2 py-0.5 rounded-full text-xs bg-amber-50 text-amber-700">مسودة</span>
+        {% endif %}
+      </h1>
+      <p class="text-slate-500 text-sm latin-nums">{{ entry.date }} · {{ entry.memo or '' }}</p>
+    </div>
+    <div class="flex gap-2">
+      {% if not entry.is_posted and can('accounting.journal.post') %}
+        <form method="post" action="{{ url_for('accounting.journal_post', entry_id=entry.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">ترحيل واعتماد</button>
+        </form>
+      {% endif %}
+      {% if entry.is_posted and can('accounting.journal.post') and not entry.reverses_entry_id %}
+        <form method="post" action="{{ url_for('accounting.journal_reverse', entry_id=entry.id) }}"
+              onsubmit="return confirm('إنشاء قيد عكسي لهذا القيد؟ الأصلي يبقى ظاهرًا.')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-sm font-medium">قيد عكسي</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if entry.reverses %}
+    <div class="mb-4 text-sm bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-4 py-2.5">
+      هذا قيد عكسي للقيد <a class="underline latin-nums" href="{{ url_for('accounting.journal_view', entry_id=entry.reverses.id) }}">{{ entry.reverses.number }}</a>.
+    </div>
+  {% endif %}
+
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+        <tr>
+          <th class="text-start px-4 py-3">الحساب</th>
+          <th class="text-end px-4 py-3">مدين</th>
+          <th class="text-end px-4 py-3">دائن</th>
+          <th class="text-start px-4 py-3">العملة/السعر</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for l in entry.lines %}
+          <tr>
+            <td class="px-4 py-2.5">{{ l.account.code }} · {{ l.account.name_ar }}</td>
+            <td class="px-4 py-2.5 text-end latin-nums">{{ (l.debit_book if l.debit_book else 0) | money }}</td>
+            <td class="px-4 py-2.5 text-end latin-nums">{{ (l.credit_book if l.credit_book else 0) | money }}</td>
+            <td class="px-4 py-2.5 text-xs text-slate-400 latin-nums">
+              {{ l.currency_code }} @ {{ l.fx_rate }}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot class="bg-slate-50 dark:bg-slate-800/50 font-semibold">
+        <tr>
+          <td class="px-4 py-3">الإجمالي (بعملة الدفاتر)</td>
+          <td class="px-4 py-3 text-end latin-nums">{{ entry.total_debit_book | money }}</td>
+          <td class="px-4 py-3 text-end latin-nums">{{ entry.total_credit_book | money }}</td>
+          <td class="px-4 py-3">
+            {% if entry.is_balanced %}<span class="text-green-600 text-xs">✓ متزن</span>{% else %}<span class="text-red-600 text-xs">غير متزن</span>{% endif %}
+          </td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %}

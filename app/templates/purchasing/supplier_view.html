@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}{{ supplier.name_ar }} — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div class="flex items-center gap-3">
+    <a href="{{ url_for('purchasing.suppliers') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <div><h1 class="text-2xl font-bold">{{ supplier.name_ar }}</h1>
+      <p class="text-slate-500 text-sm latin-nums">{{ supplier.phone or '' }} · {{ supplier.currency_code }}</p></div>
+  </div>
+  <div class="flex items-center gap-4">
+    <div class="text-end"><div class="text-xs text-slate-400">الرصيد المستحق</div>
+      <div class="text-2xl font-bold latin-nums">{{ balance | money }} {{ supplier.currency_code }}</div></div>
+    <a href="{{ url_for('purchasing.pay', sid=supplier.id) }}" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">سداد</a>
+  </div>
+</div>
+
+<div class="grid lg:grid-cols-2 gap-6">
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold text-sm">كشف الحساب</div>
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+        <tr><th class="text-start px-4 py-2">التاريخ</th><th class="text-start px-4 py-2">البيان</th>
+          <th class="text-end px-4 py-2">مدين</th><th class="text-end px-4 py-2">دائن</th></tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for r in rows %}
+          <tr><td class="px-4 py-2 latin-nums text-slate-500">{{ r.entry.date }}</td>
+            <td class="px-4 py-2 max-w-[200px] truncate">{{ r.entry.memo or '—' }}</td>
+            <td class="px-4 py-2 text-end latin-nums">{% if r.line.debit_original and r.line.debit_original|float>0 %}{{ r.line.debit_original|money }}{% endif %}</td>
+            <td class="px-4 py-2 text-end latin-nums">{% if r.line.credit_original and r.line.credit_original|float>0 %}{{ r.line.credit_original|money }}{% endif %}</td></tr>
+        {% else %}<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">لا حركات.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+    <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 font-semibold text-sm">فواتير الشراء</div>
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+        <tr><th class="text-start px-4 py-2">الرقم</th><th class="text-end px-4 py-2">الإجمالي</th>
+          <th class="text-end px-4 py-2">المتبقي</th><th class="text-center px-4 py-2">النوع</th></tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for i in invoices %}
+          <tr class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40" onclick="window.location='{{ url_for('purchasing.invoice_view', inv_id=i.id) }}'">
+            <td class="px-4 py-2 latin-nums">{{ i.number }}</td>
+            <td class="px-4 py-2 text-end latin-nums">{{ i.total|money }}</td>
+            <td class="px-4 py-2 text-end latin-nums {{ 'text-red-600' if outstanding(i)>0 else 'text-green-600' }}">{{ outstanding(i)|money }}</td>
+            <td class="px-4 py-2 text-center text-xs">{{ {'cash':'نقدي','credit':'آجل','custody':'عهدة'}[i.payment_type] }}</td></tr>
+        {% else %}<tr><td colspan="4" class="px-4 py-8 text-center text-slate-400">لا فواتير.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}أوامر الشراء — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div><h1 class="text-2xl font-bold">أوامر الشراء</h1>
+    <p class="text-slate-500 text-sm">أمر الشراء اختياري وغير ملزم محاسبيًا — يتحول إلى فاتورة عند الاستلام.</p></div>
+  <a href="{{ url_for('purchasing.order_new') }}" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">+ أمر شراء</a>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+      <tr><th class="text-start px-4 py-3">الرقم</th><th class="text-start px-4 py-3">المورد</th>
+        <th class="text-end px-4 py-3">الإجمالي</th><th class="text-center px-4 py-3">الحالة</th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for o in orders %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer" onclick="window.location='{{ url_for('purchasing.order_view', oid=o.id) }}'">
+          <td class="px-4 py-2.5 latin-nums font-medium">{{ o.number }}</td>
+          <td class="px-4 py-2.5">{{ o.supplier.name_ar if o.supplier else '—' }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums">{{ o.total | money }}</td>
+          <td class="px-4 py-2.5 text-center"><span class="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600">{{ o.status_label }}</span></td>
+        </tr>
+      {% else %}<tr><td colspan="4" class="px-4 py-10 text-center text-slate-400">لا أوامر شراء.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

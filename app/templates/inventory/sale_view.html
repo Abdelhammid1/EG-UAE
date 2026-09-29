@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}فاتورة {{ sale.number }} — منصتي{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('inventory.pos') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <div class="flex-1">
+      <h1 class="text-2xl font-bold flex items-center gap-3">
+        فاتورة بيع <span class="latin-nums">{{ sale.number }}</span>
+        <span class="px-2 py-0.5 rounded-full text-xs bg-green-50 text-green-700">مكتملة</span>
+      </h1>
+      <p class="text-slate-500 text-sm latin-nums">{{ sale.date }} · {{ sale.warehouse.name_ar }}
+        · {{ {'cash':'نقدي','card':'بطاقة','credit':'آجل'}.get(sale.payment_type, sale.payment_type) }}
+        {% if sale.customer %}· {{ sale.customer.name_ar }}{% endif %}</p>
+    </div>
+    <div class="flex gap-2">
+      {% if not sale.returned and can('sales.return.create') %}
+      <form method="post" action="{{ url_for('sales.do_return', sale_id=sale.id) }}"
+            onsubmit="return confirm('إنشاء مرتجع كامل لهذه الفاتورة بتكلفتها الأصلية؟')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-sm font-medium">مرتجع</button>
+      </form>
+      {% endif %}
+      <a href="{{ url_for('inventory.sale_receipt', sale_id=sale.id) }}" target="_blank" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">🖨️ طباعة الإيصال</a>
+      <a href="{{ url_for('inventory.sale_receipt', sale_id=sale.id, reprint=1) }}" target="_blank" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-sm font-medium">نسخة</a>
+      <a href="{{ url_for('inventory.pos') }}" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">بيع جديد</a>
+    </div>
+  </div>
+  {% if sale.returned %}
+    <div class="mb-4 text-sm bg-slate-100 border border-slate-200 text-slate-600 rounded-lg px-4 py-2.5">↩️ تم ردّ هذه الفاتورة.</div>
+  {% endif %}
+
+  {% if sale.below_min_used %}
+    <div class="mb-4 text-sm bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-4 py-2.5">
+      ⚠️ تضمّنت الفاتورة بيعًا تحت الحد الأدنى — سُجّل في سجل التدقيق.
+    </div>
+  {% endif %}
+
+  <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden mb-4" style="box-shadow:var(--sh)">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+        <tr><th class="text-start px-4 py-3">الصنف</th><th class="text-center px-4 py-3">الكمية</th>
+          <th class="text-end px-4 py-3">السعر</th><th class="text-end px-4 py-3">الإجمالي</th></tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        {% for l in sale.lines %}
+          <tr>
+            <td class="px-4 py-2.5">{{ l.product.name_ar }}</td>
+            <td class="px-4 py-2.5 text-center latin-nums">{{ l.qty | money(0) }}</td>
+            <td class="px-4 py-2.5 text-end latin-nums">{{ l.unit_price | money }}</td>
+            <td class="px-4 py-2.5 text-end latin-nums font-medium">{{ l.line_total | money }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot class="bg-slate-50 dark:bg-slate-800/50">
+        {% if sale.tax_amount and sale.tax_amount|float > 0 %}
+          <tr class="text-slate-500"><td colspan="3" class="px-4 py-1.5 text-end">المجموع الفرعي</td><td class="px-4 py-1.5 text-end latin-nums">{{ sale.subtotal | money }}</td></tr>
+          <tr class="text-slate-500"><td colspan="3" class="px-4 py-1.5 text-end">ضريبة القيمة المضافة</td><td class="px-4 py-1.5 text-end latin-nums">{{ sale.tax_amount | money }}</td></tr>
+        {% endif %}
+        <tr class="font-bold"><td colspan="3" class="px-4 py-3">الإجمالي</td>
+          <td class="px-4 py-3 text-end latin-nums">{{ sale.total | money }} {{ sale.currency_code }}</td></tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- accounting behind the sale (invisible by default, here for the accountant) -->
+  <div class="grid sm:grid-cols-3 gap-3 mb-4">
+    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 text-center">
+      <div class="text-xs text-slate-400">الإيراد</div>
+      <div class="text-xl font-bold latin-nums text-green-700">{{ sale.total | money }}</div></div>
+    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 text-center">
+      <div class="text-xs text-slate-400">التكلفة</div>
+      <div class="text-xl font-bold latin-nums text-slate-600">{{ sale.total_cost | money }}</div></div>
+    <div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-4 text-center">
+      <div class="text-xs text-slate-400">مجمل الربح</div>
+      <div class="text-xl font-bold latin-nums text-brand-700">{{ sale.profit | money }}</div></div>
+  </div>
+
+  {% if sale.journal_entry_id %}
+    <a href="{{ url_for('accounting.journal_view', entry_id=sale.journal_entry_id) }}"
+       class="inline-flex items-center gap-2 text-sm text-brand-600 hover:underline">
+      📒 عرض القيد المحاسبي لهذه الفاتورة ←
+    </a>
+  {% endif %}
+</div>
+{% endblock %}

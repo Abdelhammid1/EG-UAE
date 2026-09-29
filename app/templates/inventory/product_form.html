@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{{ 'تعديل منتج' if p else 'منتج جديد' }} — منصتي{% endblock %}
+{% block content %}
+<div class="max-w-lg mx-auto">
+  <div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('inventory.products') }}" class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">→</a>
+    <h1 class="text-2xl font-bold">{{ 'تعديل منتج' if p else 'منتج جديد' }}</h1>
+  </div>
+  <form method="post" enctype="multipart/form-data"
+        action="{{ url_for('inventory.product_edit', pid=p.id) if p else url_for('inventory.product_new') }}"
+        class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 space-y-4" style="box-shadow:var(--sh)">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% macro inp(name, label, extra='', val='') %}
+      <div><label class="block text-sm font-medium mb-1.5">{{ label }}</label>
+        <input name="{{ name }}" value="{{ val }}" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-500 {{ extra }}"></div>
+    {% endmacro %}
+    {{ inp('name_ar', 'اسم المنتج', '', p.name_ar if p else '') }}
+    <div class="grid grid-cols-2 gap-4">{{ inp('barcode','الباركود','latin-nums', p.barcode if p and p.barcode else '') }}{{ inp('category','الفئة','', p.category if p and p.category else '') }}</div>
+    <div class="grid grid-cols-3 gap-4">
+      {{ inp('default_price','سعر البيع (قطاعي)','latin-nums', p.default_price if p else '') }}
+      {{ inp('wholesale_price','سعر الجملة','latin-nums', p.wholesale_price if p else '') }}
+      {{ inp('min_price','الحد الأدنى','latin-nums', p.min_price if p else '') }}
+    </div>
+    <div class="grid grid-cols-3 gap-4">
+      {{ inp('unit','الوحدة','', p.unit if p else 'قطعة') }}
+      <div>
+        <label class="block text-sm font-medium mb-1.5">طريقة التقييم</label>
+        <select name="valuation_method" class="w-full rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-500">
+          <option value="FIFO" {{ 'selected' if p and p.valuation_method=='FIFO' }}>الوارد أولًا صادر أولًا (FIFO)</option>
+          <option value="WA" {{ 'selected' if p and p.valuation_method=='WA' }}>المتوسط المرجح</option>
+        </select>
+      </div>
+      {{ inp('reorder_level', 'حد إعادة الطلب', 'latin-nums', p.reorder_level if p else '') }}
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium mb-1.5">صورة المنتج</label>
+      {% if p and p.image_path %}
+      <div class="flex items-center gap-3 mb-2">
+        <img src="{{ url_for('static', filename=p.image_path) }}" alt="" class="w-16 h-16 rounded-lg object-cover border border-slate-200 dark:border-slate-700">
+        <label class="flex items-center gap-2 text-sm text-red-600 cursor-pointer"><input type="checkbox" name="remove_image" value="1"> إزالة الصورة الحالية</label>
+      </div>
+      {% endif %}
+      <input type="file" name="image" accept="image/*" class="w-full text-sm text-slate-500 file:me-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
+      <p class="text-[11px] text-slate-400 mt-1">اختياري — تظهر في نقطة البيع وقوائم المنتجات (PNG/JPG).</p>
+    </div>
+
+    <label class="flex items-center gap-2 text-sm cursor-pointer">
+      <input type="checkbox" name="track_serial" value="1" {{ 'checked' if p and p.track_serial }}> تتبّع السريال (IMEI) — يُطلب السريال عند الاستلام والبيع
+    </label>
+    <div class="flex gap-2 pt-2">
+      <button class="flex-1 bg-brand-600 hover:bg-brand-700 text-white font-semibold py-2.5 rounded-lg">حفظ</button>
+      <a href="{{ url_for('inventory.products') }}" class="px-6 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 font-medium">إلغاء</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

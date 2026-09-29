@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}ميزان المراجعة — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div>
+    <h1 class="text-2xl font-bold">ميزان المراجعة</h1>
+    <p class="text-slate-500 text-sm">القيود المرحّلة فقط — بعملة الدفاتر ({{ book_currency }}).</p>
+  </div>
+  <a href="{{ url_for('exports.trial_balance', branch_id=branch_id) }}" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm">تصدير Excel</a>
+  <a href="{{ url_for('exports.trial_balance', branch_id=branch_id, format='pdf') }}" class="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-sm">PDF</a>
+  <form method="get" class="flex items-center gap-2">
+    <select name="branch_id" onchange="this.form.submit()"
+            class="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2 text-sm outline-none">
+      <option value="">كل الفروع</option>
+      {% for b in branches %}<option value="{{ b.id }}" {% if branch_id==b.id %}selected{% endif %}>{{ b.name_ar }}</option>{% endfor %}
+    </select>
+  </form>
+</div>
+
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+      <tr>
+        <th class="text-start px-4 py-3">الحساب</th>
+        <th class="text-end px-4 py-3">مدين</th>
+        <th class="text-end px-4 py-3">دائن</th>
+        <th class="text-end px-4 py-3">الرصيد</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for r in tb.rows %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+          <td class="px-4 py-2.5"><span class="latin-nums text-slate-400">{{ r.account.code }}</span> · {{ r.account.name_ar }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums">{{ r.debit | money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums">{{ r.credit | money }}</td>
+          <td class="px-4 py-2.5 text-end latin-nums font-medium">
+            {{ r.balance | money }} <span class="text-xs text-slate-400">{{ 'مدين' if r.side=='debit' else 'دائن' }}</span>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4" class="px-4 py-10 text-center text-slate-400">لا توجد حركات مرحّلة بعد.</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot class="bg-slate-50 dark:bg-slate-800/50 font-bold">
+      <tr>
+        <td class="px-4 py-3">الإجمالي</td>
+        <td class="px-4 py-3 text-end latin-nums">{{ tb.total_debit | money }}</td>
+        <td class="px-4 py-3 text-end latin-nums">{{ tb.total_credit | money }}</td>
+        <td class="px-4 py-3 text-end">
+          {% if tb.balanced %}<span class="text-green-600 text-xs">✓ متوازن</span>
+          {% else %}<span class="text-red-600 text-xs">فرق {{ (tb.total_debit - tb.total_credit) | money }}</span>{% endif %}
+        </td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+{% endblock %}

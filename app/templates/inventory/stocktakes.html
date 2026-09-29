@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}الجرد — منصتي{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div>
+    <h1 class="text-2xl font-bold">الجرد الدوري</h1>
+    <p class="text-slate-500 text-sm">افتح جلسة جرد، أدخل الكميات الفعلية، ثم اعتمد التسوية.</p>
+  </div>
+  <form method="post" action="{{ url_for('inventory.stocktake_open') }}" class="flex items-center gap-2">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <select name="warehouse_id" class="rounded-lg border border-slate-300 dark:border-slate-700 dark:bg-slate-900 px-3 py-2 text-sm outline-none">
+      {% for w in warehouses %}<option value="{{ w.id }}">{{ w.name_ar }}</option>{% endfor %}
+    </select>
+    <button class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium">+ جرد جديد</button>
+  </form>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden" style="box-shadow:var(--sh)">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-500 text-xs">
+      <tr><th class="text-start px-4 py-3">الرقم</th><th class="text-start px-4 py-3">المخزن</th>
+        <th class="text-start px-4 py-3">التاريخ</th><th class="text-center px-4 py-3">الحالة</th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+      {% for st in items %}
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer"
+            onclick="window.location='{{ url_for('inventory.stocktake_view', st_id=st.id) }}'">
+          <td class="px-4 py-2.5 latin-nums font-medium">{{ st.number }}</td>
+          <td class="px-4 py-2.5">{{ st.warehouse.name_ar }}</td>
+          <td class="px-4 py-2.5 latin-nums text-slate-500">{{ st.date }}</td>
+          <td class="px-4 py-2.5 text-center">
+            {% if st.status=='approved' %}<span class="px-2 py-0.5 rounded-full text-xs bg-green-50 text-green-700">معتمد</span>
+            {% else %}<span class="px-2 py-0.5 rounded-full text-xs bg-amber-50 text-amber-700">مفتوح</span>{% endif %}
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="4" class="px-4 py-10 text-center text-slate-400">لا توجد جلسات جرد.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
